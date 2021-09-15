@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package local
+package local_test
 
 import (
 	"context"
@@ -34,6 +34,7 @@ import (
 	"perun.network/go-perun/pkg/test"
 	"perun.network/go-perun/watcher"
 	"perun.network/go-perun/watcher/internal/mocks"
+	"perun.network/go-perun/watcher/local"
 )
 
 // func init() {
@@ -539,10 +540,10 @@ func Test_Watcher_StopWatching(t *testing.T) {
 	})
 }
 
-func newWatcher(t *testing.T, rs channel.RegisterSubscriber) *Watcher {
+func newWatcher(t *testing.T, rs channel.RegisterSubscriber) *local.Watcher {
 	t.Helper()
 
-	w, err := NewWatcher(Config{RegisterSubscriber: rs})
+	w, err := local.NewWatcher(local.Config{RegisterSubscriber: rs})
 	require.NoError(t, err)
 	require.NotNil(t, w)
 	return w
@@ -702,7 +703,7 @@ func makeProgressedEvent(txs ...channel.Transaction) []channel.AdjudicatorEvent 
 	return events
 }
 
-func startWatchingForLedgerChannel(t *testing.T, w *Watcher, signedState channel.SignedState) (
+func startWatchingForLedgerChannel(t *testing.T, w *local.Watcher, signedState channel.SignedState) (
 	watcher.StatesPub, watcher.AdjudicatorSub) {
 	statesPub, eventsSub, err := w.StartWatchingLedgerChannel(context.TODO(), signedState)
 
@@ -713,7 +714,7 @@ func startWatchingForLedgerChannel(t *testing.T, w *Watcher, signedState channel
 	return statesPub, eventsSub
 }
 
-func startWatchingForSubChannel(t *testing.T, w *Watcher, signedState channel.SignedState, parentID channel.ID) (
+func startWatchingForSubChannel(t *testing.T, w *local.Watcher, signedState channel.SignedState, parentID channel.ID) (
 	watcher.StatesPub, watcher.AdjudicatorSub) {
 	statesPub, eventsSub, err := w.StartWatchingSubChannel(context.TODO(), parentID, signedState)
 
