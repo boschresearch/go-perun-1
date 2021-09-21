@@ -27,6 +27,8 @@ import (
 	"perun.network/go-perun/watcher"
 )
 
+var _ watcher.Watcher = &Watcher{}
+
 const (
 	// Duration for which the watcher will wait for latest transactions
 	// when an adjudicator event is received.
