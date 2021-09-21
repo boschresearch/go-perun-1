@@ -183,8 +183,8 @@ func receiveTxUntil(statesSub statesSub, timeout <-chan time.Time, currentTx cha
 func (w *Watcher) handleEventsFromChain(eventsFromChainSub channel.AdjudicatorSubscription,
 	eventsToClientPubSub adjudicatorPub, thisCh *ch) {
 	parent := thisCh
-	if thisCh.parent != channel.Zero {
-		parent, _ = w.registry.retrieve(thisCh.parent)
+	if thisCh.parent != nil {
+		parent = thisCh.parent
 	}
 
 	for e := eventsFromChainSub.Next(); e != nil; e = eventsFromChainSub.Next() {
