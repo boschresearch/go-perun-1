@@ -34,13 +34,15 @@ const (
 )
 
 type (
-	// closer is the interface that wraps the close method.
-	closer interface {
+	// pubSubCloser is the interface that wraps the method for closing
+	// adjudicator and states pub-sub instances.
+	pubSubCloser interface {
 		close() error
 	}
 
-	// Closer is the interface that wraps the Close method.
-	Closer interface {
+	// adjSubCloser is the interface that wraps the method for closing an
+	// adjudicator events subscription.
+	adjSubCloser interface {
 		Close() error
 	}
 
@@ -67,9 +69,9 @@ type (
 		requestLatestTx   chan struct{}
 		latestTx          chan channel.Transaction
 
-		eventsFromChainSub Closer
-		eventsToClientSub  closer
-		statesPubSub       closer
+		eventsFromChainSub adjSubCloser
+		eventsToClientSub  pubSubCloser
+		statesPubSub       pubSubCloser
 
 		subChsAccess sync.Mutex
 	}
@@ -141,7 +143,7 @@ func (w *Watcher) startWatching(ctx context.Context, parent channel.ID, signedSt
 }
 
 func newCh(id, parent channel.ID, params *channel.Params,
-	eventsFromChainSub Closer, eventsToClientSub, statesPubSub closer) *ch {
+	eventsFromChainSub adjSubCloser, eventsToClientSub, statesPubSub pubSubCloser) *ch {
 	return &ch{
 		id:     id,
 		params: params,
