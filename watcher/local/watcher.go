@@ -224,6 +224,8 @@ func (w *Watcher) handleEventsFromChain(eventsFromChainSub channel.AdjudicatorSu
 			log.Debugf("Received concluded event from chain: %v", e)
 			eventsToClientPubSub.publish(e)
 		default:
+			// This should never happen.
+			log.Error("Received adjudicator event of unknown type (%T) from chain: %v", e)
 		}
 	}
 }
