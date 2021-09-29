@@ -220,6 +220,10 @@ func (w *Watcher) handleEventsFromChain(eventsFromChainSub channel.AdjudicatorSu
 		default:
 		}
 	}
+	err := eventsFromChainSub.Err()
+	if err != nil {
+		log.Error("Subscription to adjudicator events from chain was closed with error: %v", err)
+	}
 }
 
 // registerDispute collects the latest transaction for the parent channel and
