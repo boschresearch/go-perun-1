@@ -140,8 +140,12 @@ func (ch *ch) retreiveLatestTx() channel.Transaction {
 	return <-ch.latestTx
 }
 
-func handleStatesFromClient(currentTx channel.Transaction, statesSub statesSub, requestLatestTxn chan struct{},
-	latestTx chan channel.Transaction) {
+func handleStatesFromClient(
+	currentTx channel.Transaction,
+	statesSub statesSub,
+	requestLatestTxn chan struct{},
+	latestTx chan channel.Transaction,
+) {
 	var _tx channel.Transaction
 	var ok bool
 	for {
@@ -180,8 +184,11 @@ func receiveTxUntil(statesSub statesSub, timeout <-chan time.Time, currentTx cha
 	}
 }
 
-func (w *Watcher) handleEventsFromChain(eventsFromChainSub channel.AdjudicatorSubscription,
-	eventsToClientPubSub adjudicatorPub, thisCh *ch) {
+func (w *Watcher) handleEventsFromChain(
+	eventsFromChainSub channel.AdjudicatorSubscription,
+	eventsToClientPubSub adjudicatorPub,
+	thisCh *ch,
+) {
 	parent := thisCh
 	if thisCh.parent != nil {
 		parent = thisCh.parent

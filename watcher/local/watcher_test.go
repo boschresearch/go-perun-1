@@ -424,8 +424,11 @@ func makeRegisteredEvent(txs ...channel.Transaction) []channel.AdjudicatorEvent 
 	return events
 }
 
-func startWatchingForLedgerChannel(t *testing.T, w *local.Watcher, signedState channel.SignedState) (
-	watcher.StatesPub, watcher.AdjudicatorSub) {
+func startWatchingForLedgerChannel(
+	t *testing.T,
+	w *local.Watcher,
+	signedState channel.SignedState,
+) (watcher.StatesPub, watcher.AdjudicatorSub) {
 	statesPub, eventsSub, err := w.StartWatchingLedgerChannel(context.TODO(), signedState)
 
 	require.NoError(t, err)
@@ -435,8 +438,12 @@ func startWatchingForLedgerChannel(t *testing.T, w *local.Watcher, signedState c
 	return statesPub, eventsSub
 }
 
-func startWatchingForSubChannel(t *testing.T, w *local.Watcher, signedState channel.SignedState, parentID channel.ID) (
-	watcher.StatesPub, watcher.AdjudicatorSub) {
+func startWatchingForSubChannel(
+	t *testing.T,
+	w *local.Watcher,
+	signedState channel.SignedState,
+	parentID channel.ID,
+) (watcher.StatesPub, watcher.AdjudicatorSub) {
 	statesPub, eventsSub, err := w.StartWatchingSubChannel(context.TODO(), parentID, signedState)
 
 	require.NoError(t, err)
