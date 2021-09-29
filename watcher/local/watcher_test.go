@@ -163,11 +163,11 @@ func Test_Watcher_Working(t *testing.T) {
 			triggerAdjEventAndExpectNotif(t, trigger, eventsForClient)
 			rs.AssertExpectations(t)
 		}
-		// Test if progressed events are relayed to the adjudicator subscription (eventsForClient).
+		// Test if progressed events are relayed to the adjudicator subscription.
 		t.Run("happy/progressed_event", func(t *testing.T) {
 			testIfEventsAreRelayed(t, makeProgressedEvents)
 		})
-		// Test if concluded events are relayed to the adjudicator subscription (eventsForClient).
+		// Test if concluded events are relayed to the adjudicator subscription.
 		t.Run("happy/concluded_event", func(t *testing.T) {
 			testIfEventsAreRelayed(t, makeConcludedEvents)
 		})
@@ -341,11 +341,11 @@ func Test_Watcher_Working(t *testing.T) {
 
 			rs.AssertExpectations(t)
 		}
-		// Test if progressed events are relayed to the adjudicator subscription (eventsForClient).
+		// Test if progressed events are relayed to the adjudicator subscription.
 		t.Run("happy/progressed_event", func(t *testing.T) {
 			testIfEventsAreRelayed(t, makeProgressedEvents)
 		})
-		// Test if concluded events are relayed to the adjudicator subscription (eventsForClient).
+		// Test if concluded events are relayed to the adjudicator subscription.
 		t.Run("happy/concluded_event", func(t *testing.T) {
 			testIfEventsAreRelayed(t, makeConcludedEvents)
 		})
