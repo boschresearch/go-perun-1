@@ -102,7 +102,7 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, statesPub.Publish(txs[2]))
 
 			// Trigger events and assert.
-			triggerAdjEventAndExpectNotif(t, trigger, eventsForClient)
+			triggerAdjEventAndExpectNotification(t, trigger, eventsForClient)
 			rs.AssertExpectations(t)
 		})
 		t.Run("happy/newer_than_latest_state_registered", func(t *testing.T) {
@@ -117,7 +117,7 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, statesPub.Publish(txs[1]))
 
 			// Trigger events.
-			triggerAdjEventAndExpectNotif(t, trigger, eventsForClient)
+			triggerAdjEventAndExpectNotification(t, trigger, eventsForClient)
 
 			rs.AssertExpectations(t)
 		})
@@ -135,9 +135,9 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, statesPub.Publish(txs[2]))
 
 			// Trigger events.
-			triggerAdjEventAndExpectNotif(t, trigger, eventsForClient)
+			triggerAdjEventAndExpectNotification(t, trigger, eventsForClient)
 			// Trigger events for registered state.
-			triggerAdjEventAndExpectNotif(t, trigger, eventsForClient)
+			triggerAdjEventAndExpectNotification(t, trigger, eventsForClient)
 
 			rs.AssertExpectations(t)
 		})
@@ -170,8 +170,8 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, statesPubChild.Publish(childTxs[2]))
 
 			// Parent, Child: Trigger events.
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 
 			rs.AssertExpectations(t)
 		})
@@ -199,8 +199,8 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, statesPubChild.Publish(childTxs[1]))
 
 			// Parent, Child: Trigger events.
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 			rs.AssertExpectations(t)
 		})
 		t.Run("happy/older_state_registered", func(t *testing.T) {
@@ -230,11 +230,11 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, childStatesPub.Publish(childTxs[2]))
 
 			// Parent, Child: Trigger events.
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 			// Parent, Child: Trigger events for registered state.
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 			rs.AssertExpectations(t)
 		})
 		t.Run("happy/older_state_registered_then_newer_state_received", func(t *testing.T) {
@@ -266,17 +266,17 @@ func Test_Watcher_Working(t *testing.T) {
 			require.NoError(t, childStatesPub.Publish(childTxs[2]))
 
 			// Trigger event with older state.
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 
 			// Child: Publish newer state. Parent, Child: trigger adjduciator event for the registered state.
 			require.NoError(t, childStatesPub.Publish(childTxs[3]))
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 
 			// Parent, Child: Trigger events for registered state(second time).
-			triggerAdjEventAndExpectNotif(t, triggerParent, eventsForClientParent)
-			triggerAdjEventAndExpectNotif(t, triggerChild, eventsForClientChild)
+			triggerAdjEventAndExpectNotification(t, triggerParent, eventsForClientParent)
+			triggerAdjEventAndExpectNotification(t, triggerChild, eventsForClientChild)
 
 			rs.AssertExpectations(t)
 		})
@@ -309,15 +309,15 @@ func randomTxsForSingleCh(rng *rand.Rand, n int) (*channel.Params, []channel.Tra
 	return params, txs
 }
 
-// trigger is used for triggering events on the mock adjudicator subscription.
+// adjEventSource is used for triggering events on the mock adjudicator subscription.
 //
 // Adjudicator subscription blocks until it is closed.
-type trigger struct {
+type adjEventSource struct {
 	handle    chan chan time.Time
 	adjEvents chan channel.AdjudicatorEvent
 }
 
-func (t *trigger) trigger() channel.AdjudicatorEvent {
+func (t *adjEventSource) trigger() channel.AdjudicatorEvent {
 	select {
 	case handles := <-t.handle:
 		close(handles)
@@ -335,9 +335,9 @@ func (t *trigger) trigger() channel.AdjudicatorEvent {
 // If trigger is triggered more times than the number of transactions, it panics.
 //
 // After all triggers are used, the subscription blocks.
-func setupAdjudicatorSub(adjEvents ...channel.AdjudicatorEvent) (*mocks.AdjudicatorSubscription, trigger) {
+func setupAdjudicatorSub(adjEvents ...channel.AdjudicatorEvent) (*mocks.AdjudicatorSubscription, adjEventSource) {
 	adjSub := &mocks.AdjudicatorSubscription{}
-	triggers := trigger{
+	triggers := adjEventSource{
 		handle:    make(chan chan time.Time, len(adjEvents)),
 		adjEvents: make(chan channel.AdjudicatorEvent, len(adjEvents)),
 	}
@@ -452,8 +452,11 @@ func startWatchingForSubChannel(
 	return statesPub, eventsSub
 }
 
-func triggerAdjEventAndExpectNotif(t *testing.T, trigger trigger,
-	eventsForClient watcher.AdjudicatorSub) {
+func triggerAdjEventAndExpectNotification(
+	t *testing.T,
+	trigger adjEventSource,
+	eventsForClient watcher.AdjudicatorSub,
+) {
 	wantEvent := trigger.trigger()
 	t.Logf("waiting for adjudicator event for ch %x, version: %v", wantEvent.ID(), wantEvent.Version())
 	gotEvent := <-eventsForClient.EventStream()
