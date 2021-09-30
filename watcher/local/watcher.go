@@ -63,6 +63,10 @@ type (
 		// off-chain states) when processing events from the blockchain.
 		txRetriever txRetriever
 
+		eventsFromChainSub channel.AdjudicatorSubscription
+		eventsToClientPub  adjudicatorPub
+		statesSub          statesSub
+
 		subChsAccess sync.Mutex
 	}
 )
@@ -120,30 +124,43 @@ func (w *Watcher) startWatching(
 	}
 	statesPubSub := newStatesPubSub()
 	eventsToClientPubSub := newAdjudicatorEventsPubSub()
-	ch := newCh(id, parent, signedState.Params)
+	ch := newCh(id, parent, signedState.Params, eventsFromChainSub, eventsToClientPubSub, statesPubSub)
 
 	w.registry.addUnsafe(ch)
 
-	tx := channel.Transaction{
+	initialTx := channel.Transaction{
 		State: signedState.State,
 		Sigs:  signedState.Sigs,
 	}
-	go handleStatesFromClient(tx, statesPubSub, ch.txRetriever)
-	go w.handleEventsFromChain(eventsFromChainSub, eventsToClientPubSub, ch)
+	go ch.handleStatesFromClient(initialTx)
+	go ch.handleEventsFromChain(w.rs, w.registry)
 
 	return statesPubSub, eventsToClientPubSub, nil
 }
 
-func newCh(id channel.ID, parent *ch, params *channel.Params) *ch {
+func newCh(
+	id channel.ID,
+	parent *ch,
+	params *channel.Params,
+	eventsFromChainSub channel.AdjudicatorSubscription,
+	eventsToClientPub adjudicatorPub,
+	statesSub statesSub,
+
+) *ch {
 	return &ch{
-		id:                id,
-		params:            params,
-		parent:            parent,
+		id:     id,
+		params: params,
+		parent: parent,
+
 		registeredVersion: 0,
 		txRetriever: txRetriever{
 			request:  make(chan struct{}),
 			response: make(chan channel.Transaction),
 		},
+
+		eventsFromChainSub: eventsFromChainSub,
+		eventsToClientPub:  eventsToClientPub,
+		statesSub:          statesSub,
 	}
 }
 
@@ -161,20 +178,22 @@ func (lt txRetriever) retreive() channel.Transaction {
 //
 // It should be started as a go-routine and returns when the subscription for
 // states is closed.
+func (ch *ch) handleStatesFromClient(initialTx channel.Transaction) {
+	currentTx := initialTx
 	var _tx channel.Transaction
 	var ok bool
 	for {
 		select {
-		case _tx, ok = <-statesSub.statesStream():
+		case _tx, ok = <-ch.statesSub.statesStream():
 			if !ok {
 				log.WithField("ID", currentTx.State.ID).Info("States sub closed by client. Shutting down handler")
 				return
 			}
 			currentTx = _tx
 			log.WithField("ID", currentTx.ID).Debugf("Received state from client", currentTx.Version, currentTx.ID)
-		case <-txRetriever.request:
-			currentTx = receiveTxUntil(statesSub, time.NewTimer(statesFromClientWaitTime).C, currentTx)
-			txRetriever.response <- currentTx
+		case <-ch.txRetriever.request:
+			currentTx = receiveTxUntil(ch.statesSub, time.NewTimer(statesFromClientWaitTime).C, currentTx)
+			ch.txRetriever.response <- currentTx
 		}
 	}
 }
@@ -204,43 +223,40 @@ func receiveTxUntil(statesSub statesSub, timeout <-chan time.Time, currentTx cha
 // relays it to the client. If received state is not the latest, it disputes by
 // registering the latest state.
 //
-// It should be started as a go-routine and returns when the eventsFromChainSub
-// is closed.
-func (w *Watcher) handleEventsFromChain(
-	eventsFromChainSub channel.AdjudicatorSubscription,
-	eventsToClientPubSub adjudicatorPub,
-	thisCh *ch,
-) {
-	parent := thisCh
-	if thisCh.parent != nil {
-		parent = thisCh.parent
+// It should be started as a go-routine and returns when the subscription for
+// adjudicator events from blockchain is closed.
+func (ch *ch) handleEventsFromChain(registerer channel.Registerer, chRegistry *registry) {
+	parent := ch
+	if ch.parent != nil {
+		parent = ch.parent
 	}
-
-	for e := eventsFromChainSub.Next(); e != nil; e = eventsFromChainSub.Next() {
+	for e := ch.eventsFromChainSub.Next(); e != nil; e = ch.eventsFromChainSub.Next() {
 		switch e.(type) {
 		case *channel.RegisteredEvent:
 			parent.subChsAccess.Lock()
+
 			func() {
 				defer parent.subChsAccess.Unlock()
 
 				log := log.WithFields(log.Fields{"ID": e.ID(), "Version": e.Version()})
 				log.Debug("Received registered event from chain")
 
-				eventsToClientPubSub.publish(e)
+				ch.eventsToClientPub.publish(e)
 
-				latestTx := thisCh.txRetriever.retreive()
+				latestTx := ch.txRetriever.retreive()
 				log.Debugf("Latest version is (%d)", latestTx.Version)
 
 				if e.Version() < latestTx.Version {
-					if e.Version() < thisCh.registeredVersion {
-						log.Debugf("Latest version (%d) already registered ", thisCh.registeredVersion)
+					if e.Version() < ch.registeredVersion {
+						log.Debugf("Latest version (%d) already registered ", ch.registeredVersion)
 						return
 					}
+
 					log.Debugf("Registering latest version (%d)", latestTx.Version)
-					err := registerDispute(w.registry, w.rs, parent)
+					err := registerDispute(chRegistry, registerer, parent)
 					if err != nil {
 						log.Error("Error registering dispute")
-						// TODO: Should the subscription be closed ?
+						// TODO: Should the subscription be closed with an error ?
 						return
 					}
 					log.Debug("Registered successfully")
@@ -249,7 +265,7 @@ func (w *Watcher) handleEventsFromChain(
 		default:
 		}
 	}
-	err := eventsFromChainSub.Err()
+	err := ch.eventsFromChainSub.Err()
 	if err != nil {
 		log.Error("Subscription to adjudicator events from chain was closed with error: %v", err)
 	}
