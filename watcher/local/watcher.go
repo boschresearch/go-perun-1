@@ -281,8 +281,8 @@ func (ch *ch) handleEventsFromChain(registerer channel.Registerer, chRegistry *r
 //
 // This function assumes the callers has locked the parent channel.
 func registerDispute(r *registry, registerer channel.Registerer, parentCh *ch) error {
-	subStates := retreiveLatestSubStates(r, parentTx)
 	parentTx := parentCh.txRetriever.retrieve()
+	subStates := retrieveLatestSubStates(r, parentTx)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -299,7 +299,7 @@ func registerDispute(r *registry, registerer channel.Registerer, parentCh *ch) e
 	return nil
 }
 
-func retreiveLatestSubStates(r *registry, parentTx channel.Transaction) []channel.SignedState {
+func retrieveLatestSubStates(r *registry, parentTx channel.Transaction) []channel.SignedState {
 	subStates := make([]channel.SignedState, len(parentTx.Allocation.Locked))
 	for i := range parentTx.Allocation.Locked {
 		// Can be done concurrently.
