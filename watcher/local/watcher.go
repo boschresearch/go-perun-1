@@ -44,14 +44,24 @@ type (
 		RegisterSubscriber channel.RegisterSubscriber
 	}
 
+	txRetriever struct {
+		request  chan struct{}
+		response chan channel.Transaction
+	}
+
 	ch struct {
 		id     channel.ID
 		params *channel.Params
 		parent *ch
 
+		// For keeping track of the version registered on the blockchain for
+		// this channel, in order to avoid registering the same state more than
+		// once.
 		registeredVersion uint64
-		requestLatestTx   chan struct{}
-		latestTx          chan channel.Transaction
+
+		// For retrieving the latest state (from the handler for receiving
+		// off-chain states) when processing events from the blockchain.
+		txRetriever txRetriever
 
 		subChsAccess sync.Mutex
 	}
@@ -118,7 +128,7 @@ func (w *Watcher) startWatching(
 		State: signedState.State,
 		Sigs:  signedState.Sigs,
 	}
-	go handleStatesFromClient(tx, statesPubSub, ch.requestLatestTx, ch.latestTx)
+	go handleStatesFromClient(tx, statesPubSub, ch.txRetriever)
 	go w.handleEventsFromChain(eventsFromChainSub, eventsToClientPubSub, ch)
 
 	return statesPubSub, eventsToClientPubSub, nil
@@ -130,22 +140,27 @@ func newCh(id channel.ID, parent *ch, params *channel.Params) *ch {
 		params:            params,
 		parent:            parent,
 		registeredVersion: 0,
-		requestLatestTx:   make(chan struct{}),
-		latestTx:          make(chan channel.Transaction),
+		txRetriever: txRetriever{
+			request:  make(chan struct{}),
+			response: make(chan channel.Transaction),
+		},
 	}
 }
 
-func (ch *ch) retreiveLatestTx() channel.Transaction {
-	ch.requestLatestTx <- struct{}{}
-	return <-ch.latestTx
+func (lt txRetriever) retreive() channel.Transaction {
+	lt.request <- struct{}{}
+	return <-lt.response
 }
 
-func handleStatesFromClient(
-	currentTx channel.Transaction,
-	statesSub statesSub,
-	requestLatestTxn chan struct{},
-	latestTx chan channel.Transaction,
-) {
+// handleStatesFromClient keeps receiving off-chain states published on the
+// states subscription.
+//
+// It also listens for requests on the channel's transaction retriever. When a
+// request is received, it sends the latest state on the transaction
+// retriever's response channel.
+//
+// It should be started as a go-routine and returns when the subscription for
+// states is closed.
 	var _tx channel.Transaction
 	var ok bool
 	for {
@@ -157,16 +172,17 @@ func handleStatesFromClient(
 			}
 			currentTx = _tx
 			log.WithField("ID", currentTx.ID).Debugf("Received state from client", currentTx.Version, currentTx.ID)
-		case <-requestLatestTxn:
+		case <-txRetriever.request:
 			currentTx = receiveTxUntil(statesSub, time.NewTimer(statesFromClientWaitTime).C, currentTx)
-			latestTx <- currentTx
+			txRetriever.response <- currentTx
 		}
 	}
 }
 
-// receiveTxUntil wait for the transactions on statesPub until the timeout channel is closed
-// or statesPub is closed and returns the last received transaction.
-// If no transaction was received, then returns currentTx itself.
+// receiveTxUntil wait for the transactions on statesPub until the timeout
+// channel is closed or statesPub is closed and returns the last received
+// transaction. If no transaction was received, then returns the currentTx
+// itself.
 func receiveTxUntil(statesSub statesSub, timeout <-chan time.Time, currentTx channel.Transaction) channel.Transaction {
 	var _tx channel.Transaction
 	var ok bool
@@ -174,16 +190,22 @@ func receiveTxUntil(statesSub statesSub, timeout <-chan time.Time, currentTx cha
 		select {
 		case _tx, ok = <-statesSub.statesStream():
 			if !ok {
-				return currentTx // states sub was closed, send the latest event.
+				return currentTx // states sub was closed, send the current transaction.
 			}
 			currentTx = _tx
 			log.WithField("ID", currentTx.ID).Debugf("Received state from client", currentTx.Version, currentTx.ID)
 		case <-timeout:
-			return currentTx // timer expired, send the latest the event.
+			return currentTx // timer expired, send the current transaction.
 		}
 	}
 }
 
+// handleEventsFromChain receives adjudicator events from the blockchain and
+// relays it to the client. If received state is not the latest, it disputes by
+// registering the latest state.
+//
+// It should be started as a go-routine and returns when the eventsFromChainSub
+// is closed.
 func (w *Watcher) handleEventsFromChain(
 	eventsFromChainSub channel.AdjudicatorSubscription,
 	eventsToClientPubSub adjudicatorPub,
@@ -206,7 +228,7 @@ func (w *Watcher) handleEventsFromChain(
 
 				eventsToClientPubSub.publish(e)
 
-				latestTx := thisCh.retreiveLatestTx()
+				latestTx := thisCh.txRetriever.retreive()
 				log.Debugf("Latest version is (%d)", latestTx.Version)
 
 				if e.Version() < latestTx.Version {
@@ -238,7 +260,7 @@ func (w *Watcher) handleEventsFromChain(
 //
 // This function assumes the callers has locked the parent channel.
 func registerDispute(r *registry, registerer channel.Registerer, parentCh *ch) error {
-	parentTx := parentCh.retreiveLatestTx()
+	parentTx := parentCh.txRetriever.retreive()
 	subStates := retreiveLatestSubStates(r, parentTx)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -261,7 +283,7 @@ func retreiveLatestSubStates(r *registry, parentTx channel.Transaction) []channe
 	for i := range parentTx.Allocation.Locked {
 		// Can be done concurrently.
 		subCh, _ := r.retrieve(parentTx.Allocation.Locked[i].ID)
-		subChTx := subCh.retreiveLatestTx()
+		subChTx := subCh.txRetriever.retreive()
 		subStates[i] = channel.SignedState{
 			Params: subCh.params,
 			State:  subChTx.State,
