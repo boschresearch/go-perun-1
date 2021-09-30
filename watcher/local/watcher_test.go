@@ -91,7 +91,7 @@ func Test_Watcher_Working(t *testing.T) {
 	t.Run("ledger_channel_without_sub_channel", func(t *testing.T) {
 		t.Run("happy/latest_state_registered", func(t *testing.T) {
 			params, txs := randomTxsForSingleCh(rng, 3)
-			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvent(txs[2])...)
+			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, nil)
@@ -107,7 +107,7 @@ func Test_Watcher_Working(t *testing.T) {
 		})
 		t.Run("happy/newer_than_latest_state_registered", func(t *testing.T) {
 			params, txs := randomTxsForSingleCh(rng, 3)
-			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvent(txs[2])...)
+			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, nil)
@@ -123,7 +123,7 @@ func Test_Watcher_Working(t *testing.T) {
 		})
 		t.Run("error/older_state_registered", func(t *testing.T) {
 			params, txs := randomTxsForSingleCh(rng, 3)
-			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvent(txs[1], txs[2])...)
+			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[1], txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, nil)
@@ -149,8 +149,8 @@ func Test_Watcher_Working(t *testing.T) {
 			childParams, childTxs := randomTxsForSingleCh(rng, 3)
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}} // Add sub-channel to allocation.
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvent(parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvent(childTxs[2])...)
+			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[2])...)
+			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
@@ -180,8 +180,8 @@ func Test_Watcher_Working(t *testing.T) {
 			childParams, childTxs := randomTxsForSingleCh(rng, 3)
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}} // Add sub-channel to allocation.
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvent(parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvent(childTxs[2])...)
+			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[2])...)
+			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
@@ -208,8 +208,8 @@ func Test_Watcher_Working(t *testing.T) {
 			childParams, childTxs := randomTxsForSingleCh(rng, 3)
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}} // Add sub-channel to allocation.
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvent(parentTxs[1], parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvent(childTxs[1], childTxs[2])...)
+			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[1], parentTxs[2])...)
+			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[1], childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
@@ -242,8 +242,8 @@ func Test_Watcher_Working(t *testing.T) {
 			childParams, childTxs := randomTxsForSingleCh(rng, 4)
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}} // Add sub-channel to allocation.
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvent(parentTxs[1], parentTxs[2], parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvent(childTxs[1], childTxs[2], childTxs[3])...)
+			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[1], parentTxs[2], parentTxs[2])...)
+			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[1], childTxs[2], childTxs[3])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
@@ -408,7 +408,7 @@ func assertEqualSignedStates(t *testing.T, got []channel.SignedState, want []cha
 	return true
 }
 
-func makeRegisteredEvent(txs ...channel.Transaction) []channel.AdjudicatorEvent {
+func makeRegisteredEvents(txs ...channel.Transaction) []channel.AdjudicatorEvent {
 	events := make([]channel.AdjudicatorEvent, len(txs))
 	for i, tx := range txs {
 		events[i] = &channel.RegisteredEvent{
