@@ -55,8 +55,8 @@ type (
 		parent *ch
 
 		// For keeping track of the version registered on the blockchain for
-		// this channel, in order to avoid registering the same state more than
-		// once.
+		// this channel. This is used to prevent registering the same state
+		// more than once.
 		registeredVersion uint64
 
 		// For retrieving the latest state (from the handler for receiving
@@ -164,7 +164,7 @@ func newCh(
 	}
 }
 
-func (lt txRetriever) retreive() channel.Transaction {
+func (lt txRetriever) retrieve() channel.Transaction {
 	lt.request <- struct{}{}
 	return <-lt.response
 }
@@ -248,7 +248,7 @@ func (ch *ch) handleEventsFromChain(registerer channel.Registerer, chRegistry *r
 
 				ch.eventsToClientPub.publish(e)
 
-				latestTx := ch.txRetriever.retreive()
+				latestTx := ch.txRetriever.retrieve()
 				log.Debugf("Latest version is (%d)", latestTx.Version)
 
 				if e.Version() < latestTx.Version {
@@ -281,8 +281,8 @@ func (ch *ch) handleEventsFromChain(registerer channel.Registerer, chRegistry *r
 //
 // This function assumes the callers has locked the parent channel.
 func registerDispute(r *registry, registerer channel.Registerer, parentCh *ch) error {
-	parentTx := parentCh.txRetriever.retreive()
 	subStates := retreiveLatestSubStates(r, parentTx)
+	parentTx := parentCh.txRetriever.retrieve()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -304,7 +304,7 @@ func retreiveLatestSubStates(r *registry, parentTx channel.Transaction) []channe
 	for i := range parentTx.Allocation.Locked {
 		// Can be done concurrently.
 		subCh, _ := r.retrieve(parentTx.Allocation.Locked[i].ID)
-		subChTx := subCh.txRetriever.retreive()
+		subChTx := subCh.txRetriever.retrieve()
 		subStates[i] = channel.SignedState{
 			Params: subCh.params,
 			State:  subChTx.State,
