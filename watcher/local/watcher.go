@@ -238,6 +238,13 @@ func (ch *ch) handleEventsFromChain(registerer channel.Registerer, chRegistry *r
 	for e := ch.eventsFromChainSub.Next(); e != nil; e = ch.eventsFromChainSub.Next() {
 		switch e.(type) {
 		case *channel.RegisteredEvent:
+			// This lock ensures, when there are one or more sub-channels and
+			// adjudicator event is received for each channel, the events are
+			// processed one after the other.
+			//
+			// Even if older states have been registered for more than one
+			// channel in the same family, the channel tree will be registered
+			// only once.
 			parent.subChsAccess.Lock()
 
 			func() {
