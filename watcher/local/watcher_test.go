@@ -387,19 +387,21 @@ func randomTxsForSingleCh(rng *rand.Rand, n int) (*channel.Params, []channel.Tra
 
 // adjEventSource is used for triggering events on the mock adjudicator subscription.
 //
-// Adjudicator subscription blocks until it is closed.
+// adjEvents contains the adjudicator events that can be triggered from this source.
+// handles contains the handles (signalling channels of type (chan time.Time)) for triggering these events.
 type adjEventSource struct {
-	handle    chan chan time.Time
 	adjEvents chan channel.AdjudicatorEvent
+	handles   chan chan time.Time // chan time.Time is the signalling channel type required by testify/mock.WaitUntil.
 }
 
+// trigger closes a signalling channel and returns the corresponding adjudicator event.
 func (t *adjEventSource) trigger() channel.AdjudicatorEvent {
 	select {
-	case handles := <-t.handle:
-		close(handles)
+	case handle := <-t.handles:
+		close(handle)
 		return <-t.adjEvents
 	default:
-		panic(fmt.Sprintf("Number of triggers exceeded maximum limit of %d", cap(t.handle)))
+		panic(fmt.Sprintf("Number of triggers exceeded maximum limit of %d", cap(t.handles)))
 	}
 }
 
@@ -414,13 +416,13 @@ func (t *adjEventSource) trigger() channel.AdjudicatorEvent {
 func setupAdjudicatorSub(adjEvents ...channel.AdjudicatorEvent) (*mocks.AdjudicatorSubscription, adjEventSource) {
 	adjSub := &mocks.AdjudicatorSubscription{}
 	triggers := adjEventSource{
-		handle:    make(chan chan time.Time, len(adjEvents)),
+		handles:   make(chan chan time.Time, len(adjEvents)),
 		adjEvents: make(chan channel.AdjudicatorEvent, len(adjEvents)),
 	}
 
 	for i := range adjEvents {
 		handle := make(chan time.Time)
-		triggers.handle <- handle
+		triggers.handles <- handle
 		triggers.adjEvents <- adjEvents[i]
 
 		adjSub.On("Next").Return(adjEvents[i]).WaitUntil(handle).Once()
