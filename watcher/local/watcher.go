@@ -191,30 +191,35 @@ func (ch *ch) handleStatesFromClient(initialTx channel.Transaction) {
 			}
 			currentTx = _tx
 			log.WithField("ID", currentTx.ID).Debugf("Received state from client", currentTx.Version, currentTx.ID)
+
 		case <-ch.txRetriever.request:
-			currentTx = receiveTxUntil(ch.statesSub, time.NewTimer(statesFromClientWaitTime).C, currentTx)
+			pendingTx, found := readPendingTxs(ch.statesSub, statesFromClientWaitTime)
+			if found {
+				currentTx = pendingTx
+			}
 			ch.txRetriever.response <- currentTx
 		}
 	}
 }
 
-// receiveTxUntil wait for the transactions on statesPub until the timeout
-// channel is closed or statesPub is closed and returns the last received
-// transaction. If no transaction was received, then returns the currentTx
-// itself.
-func receiveTxUntil(statesSub statesSub, timeout <-chan time.Time, currentTx channel.Transaction) channel.Transaction {
-	var _tx channel.Transaction
+// readPendingTxs reads all pending transactions on the states subscription and
+// returns the last read transaction.
+func readPendingTxs(statesSub statesSub, timeout time.Duration) (channel.Transaction, bool) {
+	var currentTx, temp channel.Transaction
 	var ok bool
+	found := false
+
 	for {
 		select {
-		case _tx, ok = <-statesSub.statesStream():
+		case temp, ok = <-statesSub.statesStream():
 			if !ok {
-				return currentTx // states sub was closed, send the current transaction.
+				return currentTx, found
 			}
-			currentTx = _tx
+			found = true
+			currentTx = temp
 			log.WithField("ID", currentTx.ID).Debugf("Received state from client", currentTx.Version, currentTx.ID)
-		case <-timeout:
-			return currentTx // timer expired, send the current transaction.
+		case <-time.NewTimer(timeout).C:
+			return currentTx, found
 		}
 	}
 }
