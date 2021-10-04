@@ -37,10 +37,10 @@ import (
 
 func Test_StartWatching(t *testing.T) {
 	rng := test.Prng(t)
-	rs := &mocks.RegisterSubscriber{}
-	rs.On("Subscribe", mock.Anything, mock.Anything).Return(&ethChannel.RegisteredSub{}, nil)
 
 	t.Run("happy/ledger_channel", func(t *testing.T) {
+		rs := &mocks.RegisterSubscriber{}
+		setExpectationSubscribeCall(rs, &ethChannel.RegisteredSub{}, nil)
 		w := newWatcher(t, rs)
 		params, state := channeltest.NewRandomParamsAndState(rng, channeltest.WithVersion(0))
 		signedState := makeSignedStateWDummySigs(params, state)
@@ -56,6 +56,9 @@ func Test_StartWatching(t *testing.T) {
 	})
 
 	t.Run("happy/sub_channel", func(t *testing.T) {
+		rs := &mocks.RegisterSubscriber{}
+		setExpectationSubscribeCall(rs, &ethChannel.RegisteredSub{}, nil) // for the ledger channel.
+		setExpectationSubscribeCall(rs, &ethChannel.RegisteredSub{}, nil) // for the sub-channel.
 		w := newWatcher(t, rs)
 
 		// Start watching for ledger channel.
@@ -97,7 +100,7 @@ func Test_Watcher_Working(t *testing.T) {
 			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, nil)
+			setExpectationSubscribeCall(rs, adjSub, nil)
 			w := newWatcher(t, rs)
 
 			// Publish both the states to the watcher.
@@ -119,7 +122,7 @@ func Test_Watcher_Working(t *testing.T) {
 			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, nil)
+			setExpectationSubscribeCall(rs, adjSub, nil)
 			w := newWatcher(t, rs)
 
 			// Publish only one of the two newly created off-chain states to the watcher.
@@ -144,8 +147,8 @@ func Test_Watcher_Working(t *testing.T) {
 			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[1], txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, nil)
-			setupRegistered(t, rs, &channelTree{txs[2], []channel.Transaction{}})
+			setExpectationSubscribeCall(rs, adjSub, nil)
+			setExpectationRegisterCalls(t, rs, &channelTree{txs[2], []channel.Transaction{}})
 			w := newWatcher(t, rs)
 
 			// Publish both the states to the watcher.
@@ -177,10 +180,9 @@ func Test_Watcher_Working(t *testing.T) {
 
 			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[2])...)
 			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[2])...)
-
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubChild, nil).Once()
+			setExpectationSubscribeCall(rs, adjSubParent, nil)
+			setExpectationSubscribeCall(rs, adjSubChild, nil)
 
 			w := newWatcher(t, rs)
 
@@ -217,8 +219,8 @@ func Test_Watcher_Working(t *testing.T) {
 			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubChild, nil).Once()
+			setExpectationSubscribeCall(rs, adjSubParent, nil)
+			setExpectationSubscribeCall(rs, adjSubChild, nil)
 
 			w := newWatcher(t, rs)
 
@@ -259,9 +261,9 @@ func Test_Watcher_Working(t *testing.T) {
 			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[1], childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubChild, nil).Once()
-			setupRegistered(t, rs, &channelTree{parentTxs[2], []channel.Transaction{childTxs[2]}})
+			setExpectationSubscribeCall(rs, adjSubParent, nil)
+			setExpectationSubscribeCall(rs, adjSubChild, nil)
+			setExpectationRegisterCalls(t, rs, &channelTree{parentTxs[2], []channel.Transaction{childTxs[2]}})
 
 			w := newWatcher(t, rs)
 
@@ -317,9 +319,9 @@ func Test_Watcher_Working(t *testing.T) {
 			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[1], childTxs[2], childTxs[3])...)
 
 			rs := &mocks.RegisterSubscriber{}
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubParent, nil).Once()
-			rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSubChild, nil).Once()
-			setupRegistered(t, rs,
+			setExpectationSubscribeCall(rs, adjSubParent, nil)
+			setExpectationSubscribeCall(rs, adjSubChild, nil)
+			setExpectationRegisterCalls(t, rs,
 				&channelTree{parentTxs[2], []channel.Transaction{childTxs[2]}},
 				&channelTree{parentTxs[2], []channel.Transaction{childTxs[3]}})
 
@@ -405,12 +407,20 @@ func (t *adjEventSource) trigger() channel.AdjudicatorEvent {
 	}
 }
 
-// setupAdjudicatorSub returns an adjudicator subscription and a trigger.
+// setExpectationSubscribeCall configures the mock RegisterSubscriber to expect
+// the "Subscribe" method to be called once. The adjSub and the err are set as
+// the return values for the call and will be returned when the method is
+// called.
+func setExpectationSubscribeCall(rs *mocks.RegisterSubscriber, adjSub channel.AdjudicatorSubscription, err error) {
+	rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, err).Once()
+}
+
+// setupAdjudicatorSub initializes and returns a mock adjudicator subscription
+// and an adjEventSource.
 //
-// On each trigger, an event is sent on the mock adjudicator subscription and
-// the corresponding transaction is returned.
-//
-// If trigger is triggered more times than the number of transactions, it panics.
+// Calling "trigger" on the adjEventSource, will send the events in adjEvents
+// (in the sequential order) on the mock adjudicator subscription. If number of
+// "trigger" calls exceeds the number of transactions, it will result in panic.
 //
 // After all triggers are used, the subscription blocks.
 func setupAdjudicatorSub(adjEvents ...channel.AdjudicatorEvent) (*mocks.AdjudicatorSubscription, adjEventSource) {
@@ -439,11 +449,24 @@ type channelTree struct {
 	subTxs []channel.Transaction
 }
 
-func setupRegistered(t *testing.T, rs *mocks.RegisterSubscriber, channelTrees ...*channelTree) {
+// setExpectationRegisterCalls configures the mock RegisterSubscriber to
+// expect the "Register" method to be called, once for each channelTree.
+//
+// On each call, the mock will check if the parameters of the call are correct
+// for the given channel tree and fails the test if incorrect. The return value
+// of "Register" calls is always nil.
+func setExpectationRegisterCalls(t *testing.T, rs *mocks.RegisterSubscriber, channelTrees ...*channelTree) {
 	limit := len(channelTrees)
 	mtx := sync.Mutex{}
 	iChannelTree := 0
 
+	// The functions passed to the "MatchedBy" method check for the correctness
+	// of the call parameters. These functions are closures over the variables:
+	// mtx, iChannelTree and channelTrees. iChannelTree is incremented on each
+	// call.
+	//
+	// This allows to validate the parameters for different channel trees in
+	// each call to the Register method.
 	rs.On("Register", mock.Anything,
 		mock.MatchedBy(func(req channel.AdjudicatorReq) bool {
 			mtx.Lock()
