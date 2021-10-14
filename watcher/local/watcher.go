@@ -145,7 +145,6 @@ func newCh(
 	eventsFromChainSub channel.AdjudicatorSubscription,
 	eventsToClientPub adjudicatorPub,
 	statesSub statesSub,
-
 ) *ch {
 	return &ch{
 		id:     id,
