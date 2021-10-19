@@ -97,7 +97,8 @@ func Test_Watcher_Working(t *testing.T) {
 		t.Run("happy/latest_state_registered", func(t *testing.T) {
 			// Setup
 			params, txs := randomTxsForSingleCh(rng, 3)
-			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[2])...)
+			adjSub := &mocks.AdjudicatorSubscription{}
+			trigger := setExpectationNextCall(adjSub, makeRegisteredEvents(txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSub, nil)
@@ -119,7 +120,8 @@ func Test_Watcher_Working(t *testing.T) {
 		t.Run("happy/newer_than_latest_state_registered", func(t *testing.T) {
 			// Setup
 			params, txs := randomTxsForSingleCh(rng, 3)
-			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[2])...)
+			adjSub := &mocks.AdjudicatorSubscription{}
+			trigger := setExpectationNextCall(adjSub, makeRegisteredEvents(txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSub, nil)
@@ -144,7 +146,8 @@ func Test_Watcher_Working(t *testing.T) {
 		t.Run("error/older_state_registered", func(t *testing.T) {
 			// Setup
 			params, txs := randomTxsForSingleCh(rng, 3)
-			adjSub, trigger := setupAdjudicatorSub(makeRegisteredEvents(txs[1], txs[2])...)
+			adjSub := &mocks.AdjudicatorSubscription{}
+			trigger := setExpectationNextCall(adjSub, makeRegisteredEvents(txs[1], txs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSub, nil)
@@ -178,8 +181,10 @@ func Test_Watcher_Working(t *testing.T) {
 			// Add sub-channel to allocation. This transaction represents funding of the sub-channel.
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}}
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[2])...)
+			adjSubParent := &mocks.AdjudicatorSubscription{}
+			triggerParent := setExpectationNextCall(adjSubParent, makeRegisteredEvents(parentTxs[2])...)
+			adjSubChild := &mocks.AdjudicatorSubscription{}
+			triggerChild := setExpectationNextCall(adjSubChild, makeRegisteredEvents(childTxs[2])...)
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSubParent, nil)
 			setExpectationSubscribeCall(rs, adjSubChild, nil)
@@ -215,8 +220,10 @@ func Test_Watcher_Working(t *testing.T) {
 			// Add sub-channel to allocation. This transaction represents funding of the sub-channel.
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}}
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[2])...)
+			adjSubParent := &mocks.AdjudicatorSubscription{}
+			triggerParent := setExpectationNextCall(adjSubParent, makeRegisteredEvents(parentTxs[2])...)
+			adjSubChild := &mocks.AdjudicatorSubscription{}
+			triggerChild := setExpectationNextCall(adjSubChild, makeRegisteredEvents(childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSubParent, nil)
@@ -257,8 +264,10 @@ func Test_Watcher_Working(t *testing.T) {
 			// Add sub-channel to allocation. This transaction represents funding of the sub-channel.
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}}
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[1], parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[1], childTxs[2])...)
+			adjSubParent := &mocks.AdjudicatorSubscription{}
+			triggerParent := setExpectationNextCall(adjSubParent, makeRegisteredEvents(parentTxs[1], parentTxs[2])...)
+			adjSubChild := &mocks.AdjudicatorSubscription{}
+			triggerChild := setExpectationNextCall(adjSubChild, makeRegisteredEvents(childTxs[1], childTxs[2])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSubParent, nil)
@@ -315,8 +324,10 @@ func Test_Watcher_Working(t *testing.T) {
 			// Add sub-channel to allocation. This transaction represents funding of the sub-channel.
 			parentTxs[2].Allocation.Locked = []channel.SubAlloc{{ID: childTxs[0].ID}}
 
-			adjSubParent, triggerParent := setupAdjudicatorSub(makeRegisteredEvents(parentTxs[1], parentTxs[2], parentTxs[2])...)
-			adjSubChild, triggerChild := setupAdjudicatorSub(makeRegisteredEvents(childTxs[1], childTxs[2], childTxs[3])...)
+			adjSubParent := &mocks.AdjudicatorSubscription{}
+			triggerParent := setExpectationNextCall(adjSubParent, makeRegisteredEvents(parentTxs[1], parentTxs[2], parentTxs[2])...)
+			adjSubChild := &mocks.AdjudicatorSubscription{}
+			triggerChild := setExpectationNextCall(adjSubChild, makeRegisteredEvents(childTxs[1], childTxs[2], childTxs[3])...)
 
 			rs := &mocks.RegisterSubscriber{}
 			setExpectationSubscribeCall(rs, adjSubParent, nil)
@@ -415,7 +426,7 @@ func setExpectationSubscribeCall(rs *mocks.RegisterSubscriber, adjSub channel.Ad
 	rs.On("Subscribe", mock.Anything, mock.Anything).Return(adjSub, err).Once()
 }
 
-// setupAdjudicatorSub initializes and returns a mock adjudicator subscription
+// setExpectationNextCall initializes and returns a mock adjudicator subscription
 // and an adjEventSource.
 //
 // Calling "trigger" on the adjEventSource, will send the events in adjEvents
@@ -423,8 +434,10 @@ func setExpectationSubscribeCall(rs *mocks.RegisterSubscriber, adjSub channel.Ad
 // "trigger" calls exceeds the number of transactions, it will result in panic.
 //
 // After all triggers are used, the subscription blocks.
-func setupAdjudicatorSub(adjEvents ...channel.AdjudicatorEvent) (*mocks.AdjudicatorSubscription, adjEventSource) {
-	adjSub := &mocks.AdjudicatorSubscription{}
+func setExpectationNextCall(
+	adjSub *mocks.AdjudicatorSubscription,
+	adjEvents ...channel.AdjudicatorEvent,
+) adjEventSource {
 	triggers := adjEventSource{
 		handles:   make(chan chan time.Time, len(adjEvents)),
 		adjEvents: make(chan channel.AdjudicatorEvent, len(adjEvents)),
@@ -441,7 +454,7 @@ func setupAdjudicatorSub(adjEvents ...channel.AdjudicatorEvent) (*mocks.Adjudica
 	handle := make(chan time.Time)
 	adjSub.On("Next").Return(channel.RegisteredEvent{}).WaitUntil(handle).Once()
 
-	return adjSub, triggers
+	return triggers
 }
 
 type channelTree struct {
