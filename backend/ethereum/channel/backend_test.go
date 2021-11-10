@@ -30,6 +30,7 @@ import (
 	ethchanneltest "perun.network/go-perun/backend/ethereum/channel/test"
 	ethwallettest "perun.network/go-perun/backend/ethereum/wallet/test"
 	"perun.network/go-perun/channel/test"
+	perunio "perun.network/go-perun/pkg/io"
 	iotest "perun.network/go-perun/pkg/io/test"
 	pkgtest "perun.network/go-perun/pkg/test"
 	perunwallet "perun.network/go-perun/wallet"
@@ -113,6 +114,20 @@ func newChannelSetup(rng *rand.Rand) *test.Setup {
 	}
 }
 
+// testAsset implements the Serializer interface on Asset.
+// So, that it can be used in GenericSerializerTest.
+type testAsset struct {
+	asset channel.Asset
+}
+
+func (t *testAsset) Encode(w io.Writer) error {
+	return perunio.Encode(w, &t.asset)
+}
+
+func (t *testAsset) Decode(r io.Reader) error {
+	return t.asset.Decode(r)
+}
+
 func TestAssetSerialization(t *testing.T) {
 	rng := pkgtest.Prng(t)
 	asset := ethwallettest.NewRandomAddress(rng)
@@ -121,7 +136,7 @@ func TestAssetSerialization(t *testing.T) {
 
 	go func() {
 		defer close(done)
-		assert.NoError(t, asset.Encode(writer))
+		assert.NoError(t, perunio.Encode(writer, &asset))
 	}()
 
 	backend := new(channel.Backend)
@@ -132,6 +147,6 @@ func TestAssetSerialization(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		asset := ethwallettest.NewRandomAddress(rng)
-		iotest.GenericSerializerTest(t, &asset)
+		iotest.GenericSerializerTest(t, &testAsset{asset})
 	}
 }

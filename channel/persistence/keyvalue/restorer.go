@@ -109,7 +109,7 @@ func (pr *PersistRestorer) RestorePeer(addr wire.Address) (persistence.ChannelIt
 // nolint: interfacer
 func peerChannelsKey(addr wire.Address) (string, error) {
 	var key strings.Builder
-	if err := addr.Encode(&key); err != nil {
+	if err := perunio.Encode(&key, addr); err != nil {
 		return "", errors.WithMessage(err, "encoding peer address")
 	}
 	key.WriteString(":channel:")

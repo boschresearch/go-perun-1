@@ -15,6 +15,7 @@
 package channel
 
 import (
+	"bytes"
 	"io"
 	"math/rand"
 
@@ -34,9 +35,13 @@ func NewRandomAsset(rng *rand.Rand) *Asset {
 	return &Asset{ID: rng.Int63()}
 }
 
-// Encode encodes a sim Asset into the io.Writer `w`.
-func (a Asset) Encode(w io.Writer) error {
-	return perunio.Encode(w, a.ID)
+// MarshalBinary marshals a sim Asset into the binary format.
+func (a Asset) MarshalBinary() ([]byte, error) {
+	buff := bytes.NewBuffer(make([]byte, 0, 8))
+	if err := perunio.Encode(buff, a.ID); err != nil {
+		return nil, err
+	}
+	return buff.Bytes(), nil
 }
 
 // Decode decodes a sim Asset from the io.Reader `r`.

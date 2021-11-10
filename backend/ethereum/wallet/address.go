@@ -35,11 +35,10 @@ func (a *Address) Bytes() []byte {
 	return (*common.Address)(a).Bytes()
 }
 
-// Encode encodes this address into a io.Writer. Part of the
-// go-perun/pkg/io.Serializer interface.
-func (a *Address) Encode(w io.Writer) error {
-	_, err := w.Write(a.Bytes())
-	return err
+// MarshalBinary marhals the address into a binary form.
+// Error will always be nil, it is for implementing BinaryMarshaler.
+func (a *Address) MarshalBinary() ([]byte, error) {
+	return (*common.Address)(a).Bytes(), nil
 }
 
 // Decode decodes an address from a io.Reader. Part of the
