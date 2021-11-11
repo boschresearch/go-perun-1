@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"perun.network/go-perun/pkg/io"
 	pkgtest "perun.network/go-perun/pkg/test"
 	"perun.network/go-perun/wallet/test"
 )
@@ -91,8 +92,6 @@ func TestGenericTests(t *testing.T) {
 
 func newWalletSetup(rng *rand.Rand) *test.Setup {
 	w := NewWallet()
-	acc := w.NewRandomAccount(rng)
-	accountB := NewRandomAccount(rng)
 
 	data := make([]byte, 128)
 	_, err := rng.Read(data)
@@ -100,18 +99,24 @@ func newWalletSetup(rng *rand.Rand) *test.Setup {
 		panic(err)
 	}
 
-	backend := new(Backend)
-	addrEncoded := accountB.Address().Bytes()
-	addrLen := len(addrEncoded)
-	zeroAddr, err := backend.DecodeAddress(bytes.NewReader(make([]byte, addrLen)))
+	addressNotInWallet := NewRandomAccount(rng).Address()
+	var buff bytes.Buffer
+	err = io.Encode(&buff, addressNotInWallet)
 	if err != nil {
 		panic(err)
 	}
+	addrEncoded := buff.Bytes()
+
+	zeroAddr := &Address{
+		Curve: curve,
+		X:     big.NewInt(0),
+		Y:     big.NewInt(0),
+	}
 
 	return &test.Setup{
-		Backend:         backend,
+		Backend:         new(Backend),
 		Wallet:          w,
-		AddressInWallet: acc.Address(),
+		AddressInWallet: w.NewRandomAccount(rng).Address(),
 		AddressEncoded:  addrEncoded,
 		ZeroAddress:     zeroAddr,
 		DataToSign:      data,
