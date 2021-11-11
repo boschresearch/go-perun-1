@@ -50,6 +50,13 @@ func Encode(writer io.Writer, values ...interface{}) (err error) {
 			if err != nil {
 				return errors.WithMessage(err, "marshaling to byte array")
 			}
+
+			var length int64 = int64(len(data))
+			err = binary.Write(writer, byteOrder, length)
+			if err != nil {
+				return errors.WithMessage(err, "writing length of marshalled data to byte array")
+			}
+
 			err = ByteSlice(data).Encode(writer)
 		default:
 			if enc, ok := value.(Encoder); ok {

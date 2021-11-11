@@ -17,9 +17,11 @@ package wallet
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
 	"perun.network/go-perun/log"
@@ -112,7 +114,16 @@ func (a *Address) MarshalBinary() ([]byte, error) {
 // Decode decodes an address from an io.Reader. Part of the
 // go-perun/pkg/io.Serializer interface.
 func (a *Address) Decode(r io.Reader) error {
-	data := make([]byte, 64)
+	var length int64
+	err := perunio.Decode(r, &length)
+	if err != nil {
+		return err
+	}
+	if length != 64 {
+		return fmt.Errorf("unexpected address length %d, want %d", length, common.AddressLength)
+	}
+
+	data := make([]byte, length)
 	if err := perunio.Decode(r, &data); err != nil {
 		return errors.WithMessage(err, "decoding address")
 	}
