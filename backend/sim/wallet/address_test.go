@@ -19,8 +19,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"perun.network/go-perun/pkg/test"
+
+	"perun.network/go-perun/pkg/io/test"
+	pkgtest "perun.network/go-perun/pkg/test"
 )
+
+func Test_GenericMarshaler(t *testing.T) {
+	rng := pkgtest.Prng(t)
+	for n := 0; n < 10; n++ {
+		test.GenericMarshalerTest(t, NewRandomAddress(rng))
+	}
+}
 
 func TestAddress_ByteArray(t *testing.T) {
 	dest := [64]byte{}
@@ -53,7 +62,7 @@ func TestAddress_ByteArray(t *testing.T) {
 
 func TestAddressOrdering(t *testing.T) {
 	const EQ, LT, GT = 0, -1, 1
-	rng := test.Prng(t)
+	rng := pkgtest.Prng(t)
 
 	type addrTest struct {
 		addr     [2]*Address
