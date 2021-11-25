@@ -16,9 +16,34 @@ package io
 
 import (
 	"bytes"
+	"encoding"
 
 	"github.com/pkg/errors"
 )
+
+// EqualBinary returns whether the binary representation of the two values `a` and `b` are equal.
+// It returns an error when marshalling fails.
+func EqualBinary(a, b encoding.BinaryMarshaler) (bool, error) {
+	// golang does not have a XOR
+	if (a == nil) != (b == nil) {
+		return false, errors.New("only one argument was nil")
+	}
+	// just using a == b would be too easy here since go panics
+	if (a == nil) && (b == nil) {
+		return true, nil
+	}
+
+	binaryA, err := a.MarshalBinary()
+	if err != nil {
+		return false, errors.Wrap(err, "EqualBinary: marshaling a")
+	}
+	binaryB, err := b.MarshalBinary()
+	if err != nil {
+		return false, errors.Wrap(err, "EqualBinary: marshaling b")
+	}
+
+	return bytes.Equal(binaryA, binaryB), nil
+}
 
 // EqualEncoding returns whether the two Encoders `a` and `b` encode to the same byteslice
 // or an error when the encoding failed.
