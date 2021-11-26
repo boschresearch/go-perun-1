@@ -43,7 +43,7 @@ func TestAddress_Bytes(t *testing.T) {
 			Y: new(big.Int).SetBytes(dest[addressPartYStartIndex:])}
 		result, err := addr.MarshalBinary()
 		assert.NoError(t, err, "marshaling address should not error")
-		assert.Equal(t, result[:], dest[:])
+		assert.Equal(t, result, dest[:])
 	})
 
 	t.Run("half length", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestAddress_Bytes(t *testing.T) {
 			Y: new(big.Int).SetBytes(dest[addressPartYStartIndex:])}
 		result, err := addr.MarshalBinary()
 		assert.NoError(t, err, "marshaling address should not error")
-		assert.Equal(t, result[:], dest[:])
+		assert.Equal(t, result, dest[:])
 	})
 }
 
