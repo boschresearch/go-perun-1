@@ -100,7 +100,7 @@ func (a *Address) Cmp(addr wallet.Address) int {
 	return yCmp
 }
 
-// MarshalBinary marhals the address into a binary form.
+// MarshalBinary marshals the address into a binary form.
 // Error will always be nil, it is for implementing BinaryMarshaler.
 func (a *Address) MarshalBinary() ([]byte, error) {
 	data := a.ByteArray()

@@ -34,7 +34,7 @@ func (a *Address) Bytes() []byte {
 	return (*common.Address)(a).Bytes()
 }
 
-// MarshalBinary marhals the address into a binary form.
+// MarshalBinary marshals the address into a binary form.
 // Error will always be nil, it is for implementing BinaryMarshaler.
 func (a *Address) MarshalBinary() ([]byte, error) {
 	return (*common.Address)(a).Bytes(), nil
