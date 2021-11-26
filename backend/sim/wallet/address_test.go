@@ -31,17 +31,17 @@ func Test_GenericMarshaler(t *testing.T) {
 	}
 }
 
-func TestAddress_ByteArray(t *testing.T) {
-	dest := [64]byte{}
+func TestAddress_Bytes(t *testing.T) {
+	dest := [AddressBinaryLength]byte{}
 	t.Run("full length", func(t *testing.T) {
 		for i := range dest {
 			dest[i] = byte(i)
 		}
 
 		addr := &Address{
-			X: new(big.Int).SetBytes(dest[:32]),
-			Y: new(big.Int).SetBytes(dest[32:])}
-		result := addr.ByteArray()
+			X: new(big.Int).SetBytes(dest[:addressPartXEndIndex]),
+			Y: new(big.Int).SetBytes(dest[addressPartYStartIndex:])}
+		result := addr.Bytes()
 		assert.Equal(t, result[:], dest[:])
 	})
 
@@ -53,9 +53,9 @@ func TestAddress_ByteArray(t *testing.T) {
 		}
 
 		addr := &Address{
-			X: new(big.Int).SetBytes(dest[:32]),
-			Y: new(big.Int).SetBytes(dest[32:])}
-		result := addr.ByteArray()
+			X: new(big.Int).SetBytes(dest[:addressPartXEndIndex]),
+			Y: new(big.Int).SetBytes(dest[addressPartYStartIndex:])}
+		result := addr.Bytes()
 		assert.Equal(t, result[:], dest[:])
 	})
 }
