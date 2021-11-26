@@ -25,8 +25,14 @@ import (
 	"perun.network/go-perun/wallet"
 )
 
-// AddressBinaryLength is the length of the binary representation of Address.
-const AddressBinaryLength = 64
+const (
+	// AddressBinaryLength is the length of the binary representation of Address.
+	AddressBinaryLength = 64
+
+	addressPartXEndIndex   = 32
+	addressPartYStartIndex = 32
+	addressPartYEndIndex   = 64
+)
 
 // Address represents a simulated address.
 type Address ecdsa.PublicKey
@@ -56,15 +62,16 @@ func (a *Address) Bytes() []byte {
 	return data[:]
 }
 
-// ByteArray converts an address into a 64-byte array. The returned array
-// consists of two 32-byte chunks representing the public key's X and Y values.
-func (a *Address) ByteArray() (data [64]byte) {
+// ByteArray converts an address into a 64-byte array (length of the binary
+// representation of address). The returned array consists of two 32-byte
+// chunks representing the public key's X and Y values.
+func (a *Address) ByteArray() (data [AddressBinaryLength]byte) {
 	xb := a.X.Bytes()
 	yb := a.Y.Bytes()
 
 	// Left-pad with 0 bytes.
-	copy(data[32-len(xb):32], xb)
-	copy(data[64-len(yb):64], yb)
+	copy(data[addressPartXEndIndex-len(xb):addressPartXEndIndex], xb)
+	copy(data[addressPartYEndIndex-len(yb):addressPartYEndIndex], yb)
 
 	return data
 }
@@ -116,8 +123,8 @@ func (a *Address) UnmarshalBinary(data []byte) error {
 		return fmt.Errorf("unexpected address length %d, want %d", len(data), AddressBinaryLength)
 	}
 
-	a.X = new(big.Int).SetBytes(data[:32])
-	a.Y = new(big.Int).SetBytes(data[32:])
+	a.X = new(big.Int).SetBytes(data[:addressPartXEndIndex])
+	a.Y = new(big.Int).SetBytes(data[addressPartYStartIndex:])
 	a.Curve = curve
 
 	return nil
