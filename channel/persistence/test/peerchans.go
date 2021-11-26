@@ -80,11 +80,14 @@ func peerKey(a wire.Address) string {
 	if err != nil {
 		panic("error encoding peer key: " + err.Error())
 	}
-	return key.String()
+	// nolint: gosimple // (not using key.String() as it meant human-readable string
+	// representation only.
+	return string(key.Bytes())
 }
 
 func peerFromKey(s string) wire.Address {
-	p, err := wire.DecodeAddress(bytes.NewBuffer([]byte(s)))
+	p := wire.NewAddress()
+	err := io.Decode(bytes.NewBuffer([]byte(s)), p)
 	if err != nil {
 		panic("error decoding peer key: " + err.Error())
 	}

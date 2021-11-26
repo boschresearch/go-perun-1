@@ -39,10 +39,10 @@ type Addresses []Address
 // of unknown length.
 type AddressesWithLen []Address
 
-// DecodeAddress decodes a peer address.
-func DecodeAddress(r stdio.Reader) (Address, error) {
-	addr := wallet.NewAddress()
-	return addr, io.Decode(r, addr)
+// NewAddress returns a new address instance.
+// It can be used for Unmarshaling address from its binary representation.
+func NewAddress() Address {
+	return wallet.NewAddress()
 }
 
 // Encode encodes wire addresses.
