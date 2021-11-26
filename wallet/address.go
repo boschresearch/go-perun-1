@@ -142,7 +142,7 @@ func (a AddressDec) Decode(r stdio.Reader) (err error) {
 func Key(a Address) AddrKey {
 	var buff strings.Builder
 	if err := io.Encode(&buff, a); err != nil {
-		panic("Could not encode address in AddrKey" + err.Error())
+		panic("Could not encode address in AddrKey: " + err.Error())
 	}
 	return AddrKey(buff.String())
 }
@@ -154,7 +154,7 @@ func FromKey(k AddrKey) Address {
 	a := NewAddress()
 	err := io.Decode(bytes.NewBuffer([]byte(k)), a)
 	if err != nil {
-		panic("Could not decode address in FromKey " + err.Error())
+		panic("Could not decode address in FromKey: " + err.Error())
 	}
 	return a
 }
