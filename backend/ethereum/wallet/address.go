@@ -23,6 +23,9 @@ import (
 	"perun.network/go-perun/wallet"
 )
 
+// AddressBinaryLength is the length of the binary representation of Address.
+const AddressBinaryLength = common.AddressLength
+
 // compile time check that we implement the perun Address interface.
 var _ wallet.Address = (*Address)(nil)
 
@@ -42,8 +45,8 @@ func (a *Address) MarshalBinary() ([]byte, error) {
 
 // UnmarshalBinary unmarshalled the address from its binary representation.
 func (a *Address) UnmarshalBinary(data []byte) error {
-	if len(data) != common.AddressLength {
-		return fmt.Errorf("unexpected address length %d, want %d", len(data), 64)
+	if len(data) != AddressBinaryLength {
+		return fmt.Errorf("unexpected address length %d, want %d", len(data), AddressBinaryLength)
 	}
 
 	(*common.Address)(a).SetBytes(data)

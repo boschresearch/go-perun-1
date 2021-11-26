@@ -25,6 +25,9 @@ import (
 	"perun.network/go-perun/wallet"
 )
 
+// AddressBinaryLength is the length of the binary representation of Address.
+const AddressBinaryLength = 64
+
 // Address represents a simulated address.
 type Address ecdsa.PublicKey
 
@@ -109,8 +112,8 @@ func (a *Address) MarshalBinary() ([]byte, error) {
 
 // UnmarshalBinary unmarshalled the address from its binary representation.
 func (a *Address) UnmarshalBinary(data []byte) error {
-	if len(data) != 64 {
-		return fmt.Errorf("unexpected address length %d, want %d", len(data), 64)
+	if len(data) != AddressBinaryLength {
+		return fmt.Errorf("unexpected address length %d, want %d", len(data), AddressBinaryLength)
 	}
 
 	a.X = new(big.Int).SetBytes(data[:32])
