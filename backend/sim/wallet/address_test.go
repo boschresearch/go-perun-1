@@ -41,7 +41,8 @@ func TestAddress_Bytes(t *testing.T) {
 		addr := &Address{
 			X: new(big.Int).SetBytes(dest[:addressPartXEndIndex]),
 			Y: new(big.Int).SetBytes(dest[addressPartYStartIndex:])}
-		result := addr.Bytes()
+		result, err := addr.MarshalBinary()
+		assert.NoError(t, err, "marshaling address should not error")
 		assert.Equal(t, result[:], dest[:])
 	})
 
@@ -55,7 +56,8 @@ func TestAddress_Bytes(t *testing.T) {
 		addr := &Address{
 			X: new(big.Int).SetBytes(dest[:addressPartXEndIndex]),
 			Y: new(big.Int).SetBytes(dest[addressPartYStartIndex:])}
-		result := addr.Bytes()
+		result, err := addr.MarshalBinary()
+		assert.NoError(t, err, "marshaling address should not error")
 		assert.Equal(t, result[:], dest[:])
 	})
 }
