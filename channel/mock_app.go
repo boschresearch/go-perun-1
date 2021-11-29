@@ -15,11 +15,10 @@
 package channel
 
 import (
-	"io"
+	"encoding/binary"
 
 	"github.com/pkg/errors"
 
-	perunio "perun.network/go-perun/pkg/io"
 	"perun.network/go-perun/wallet"
 )
 
@@ -34,6 +33,8 @@ var _ StateApp = (*MockApp)(nil)
 
 // MockOp serves as Action and State.Data for MockApp.
 type MockOp uint64
+
+const mockOpBinaryLength = binary.MaxVarintLen64
 
 var _ Action = (*MockOp)(nil)
 var _ Data = (*MockOp)(nil)
@@ -57,14 +58,21 @@ func NewMockOp(op MockOp) *MockOp {
 	return &op
 }
 
-// Encode encodes a MockOp into an io.Writer.
-func (o MockOp) Encode(w io.Writer) error {
-	return perunio.Encode(w, uint64(o))
+// MarshalBinary marshals MockOp to its binary representation.
+func (o MockOp) MarshalBinary() ([]byte, error) {
+	data := make([]byte, mockOpBinaryLength)
+	binary.PutUvarint(data, uint64(o))
+	return data, nil
 }
 
-// Decode decodes a MockOp from an io.Reader.
-func (o *MockOp) Decode(r io.Reader) error {
-	return perunio.Decode(r, (*uint64)(o))
+// UnmarshalBinary unmarshals MockOp from its binary representation.
+func (o *MockOp) UnmarshalBinary(data []byte) error {
+	mockOp, cntBytesRead := binary.Uvarint(data)
+	if cntBytesRead <= 0 { // See documentation of binary.Uvarint for info on cntBytesRead.
+		return errors.New("unmarshaling mock app data: incorrect length")
+	}
+	*o = MockOp(mockOp)
+	return nil
 }
 
 // Clone returns a deep copy of a MockOp.
@@ -82,16 +90,14 @@ func (a MockApp) Def() wallet.Address {
 	return a.definition
 }
 
-// DecodeAction returns a decoded MockOp or an error.
-func (a MockApp) DecodeAction(r io.Reader) (Action, error) {
-	var act MockOp
-	return &act, act.Decode(r)
+// NewAction returns an instance of Action specific to MockApp.
+func (a MockApp) NewAction() Action {
+	return new(MockOp)
 }
 
-// DecodeData returns a decoded MockOp or an error.
-func (a MockApp) DecodeData(r io.Reader) (Data, error) {
-	var data MockOp
-	return &data, data.Decode(r)
+// NewData returns an instance of Data specific to MockApp.
+func (a MockApp) NewData() Data {
+	return new(MockOp)
 }
 
 // ValidTransition checks the transition for validity.

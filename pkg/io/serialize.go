@@ -62,6 +62,10 @@ func Encode(writer io.Writer, values ...interface{}) (err error) {
 				return errors.WithMessage(err, "writing length of marshalled data")
 			}
 
+			// Nothing to be encoded when length is zero.
+			if length == 0 {
+				break
+			}
 			err = ByteSlice(data).Encode(writer)
 		default:
 			if enc, ok := value.(Encoder); ok {
@@ -108,6 +112,10 @@ func Decode(reader io.Reader, values ...interface{}) (err error) {
 				return errors.WithMessage(err, "reading length of binary data")
 			}
 
+			// Nothing to be decoded when length is zero.
+			if length == 0 {
+				break
+			}
 			var data ByteSlice = make([]byte, length)
 			err = data.Decode(reader)
 			if err != nil {

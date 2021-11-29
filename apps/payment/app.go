@@ -16,8 +16,6 @@
 package payment // import "perun.network/go-perun/apps/payment"
 
 import (
-	"io"
-
 	"github.com/pkg/errors"
 
 	"perun.network/go-perun/channel"
@@ -35,9 +33,9 @@ func (a *App) Def() wallet.Address {
 	return a.Addr
 }
 
-// DecodeData does not read anything from the reader and returns new NoData.
-func (a *App) DecodeData(io.Reader) (channel.Data, error) {
-	return Data(), nil
+// NewData returns an instance of noData.
+func (a *App) NewData() channel.Data {
+	return Data()
 }
 
 // ValidTransition checks that money flows only from the actor to the other
