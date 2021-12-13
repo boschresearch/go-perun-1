@@ -62,7 +62,7 @@ func (a *Account) Address() wallet.Address {
 
 // SignData is used to sign data with this account. If the account is locked,
 // returns an error instead of a signature.
-func (a *Account) SignData(data []byte) ([]byte, error) {
+func (a *Account) SignData(data []byte) (wallet.Sig, error) {
 	if a.locked.IsSet() {
 		return nil, errors.New("account locked")
 	}
@@ -79,19 +79,21 @@ func (a *Account) SignData(data []byte) ([]byte, error) {
 
 // serializeSignature serializes a signature into a []byte or returns an error.
 // The length of the []byte is dictated by the curves parameters and padded with 0 bytes if necessary.
-func serializeSignature(r, s *big.Int) ([]byte, error) {
+func serializeSignature(r, s *big.Int) (*Sig, error) {
 	pointSize := curve.Params().BitSize / bitsPerByte
 	rBytes := append(make([]byte, pointSize-len(r.Bytes())), r.Bytes()...)
 	sBytes := append(make([]byte, pointSize-len(s.Bytes())), s.Bytes()...)
-
-	return append(rBytes, sBytes...), nil
+	sig := Sig(append(rBytes, sBytes...))
+	return &sig, nil
 }
 
-// deserializeSignature deserializes a signature from a byteslice and returns `r` and `s`
-// or an error.
-func deserializeSignature(b []byte) (*big.Int, *big.Int, error) {
+// deserializeSignature deserializes a signature and returns `r` and `s` or an
+// error.
+func deserializeSignature(sig *Sig) (*big.Int, *big.Int, error) {
 	pointSize := curve.Params().BitSize / bitsPerByte
 	sigSize := pointsPerSig * pointSize
+
+	b := []byte(*sig)
 	if len(b) != sigSize {
 		return nil, nil, errors.Errorf("expected %d bytes for a signature but got: %d", sigSize, len(b))
 	}

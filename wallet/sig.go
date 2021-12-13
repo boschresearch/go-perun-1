@@ -15,7 +15,7 @@
 package wallet
 
 import (
-	"bytes"
+	"encoding"
 	"io"
 	"math"
 
@@ -25,7 +25,17 @@ import (
 )
 
 // Sig is a single signature.
-type Sig = []byte
+type Sig interface {
+	// BinaryMarshaler marshals the blockchain specific address to binary
+	// format (a byte array).
+	encoding.BinaryMarshaler
+	// BinaryUnmarshaler unmarshals the blockchain specific address from
+	// binary format (a byte array).
+	encoding.BinaryUnmarshaler
+
+	// Clone returns a deep copy of the signature.
+	Clone() Sig
+}
 
 // CloneSigs returns a deep copy of a slice of signatures.
 func CloneSigs(sigs []Sig) []Sig {
@@ -35,7 +45,7 @@ func CloneSigs(sigs []Sig) []Sig {
 	clonedSigs := make([]Sig, len(sigs))
 	for i, sig := range sigs {
 		if sig != nil {
-			clonedSigs[i] = bytes.Repeat(sig, 1)
+			clonedSigs[i] = sig.Clone()
 		}
 	}
 	return clonedSigs
@@ -52,7 +62,8 @@ type SigDec struct {
 
 // Decode decodes a single signature.
 func (s SigDec) Decode(r io.Reader) (err error) {
-	*s.Sig, err = DecodeSig(r)
+	*s.Sig = NewSig()
+	err = perunio.Decode(r, *s.Sig)
 	return err
 }
 
@@ -99,7 +110,8 @@ func DecodeSparseSigs(r io.Reader, sigs *[]Sig) (err error) {
 			if ((mask[maskIdx] >> bitIdx) % binaryModulo) == 0 {
 				(*sigs)[sigIdx] = nil
 			} else {
-				(*sigs)[sigIdx], err = DecodeSig(r)
+				(*sigs)[sigIdx] = NewSig()
+				err = perunio.Decode(r, (*sigs)[sigIdx])
 				if err != nil {
 					return errors.WithMessagef(err, "decoding signature %d", sigIdx)
 				}

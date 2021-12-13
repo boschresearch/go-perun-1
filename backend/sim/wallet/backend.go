@@ -18,13 +18,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
-	"io"
 
 	"github.com/pkg/errors"
 
-	"perun.network/go-perun/log"
 	"perun.network/go-perun/wallet"
-	"perun.network/go-perun/wire/perunio"
 )
 
 var curve = elliptic.P256()
@@ -41,17 +38,23 @@ func (b *Backend) NewAddress() wallet.Address {
 	return &addr
 }
 
-// DecodeSig reads a []byte with length of a signature.
-func (b *Backend) DecodeSig(r io.Reader) (wallet.Sig, error) {
-	buf := make(wallet.Sig, (curve.Params().BitSize/bitsPerByte)*pointsPerSig)
-	return buf, perunio.Decode(r, &buf)
+// NewAddress returns a variable of type Address, which can be used
+// for unmarshalling an address from its binary representation.
+func (*Backend) NewSig() wallet.Sig {
+	s := Sig(make([]byte, SigLen))
+	return &s
 }
 
 // VerifySignature verifies if a signature was made by this account.
-func (b *Backend) VerifySignature(msg []byte, sig wallet.Sig, a wallet.Address) (bool, error) {
+func (b *Backend) VerifySignature(msg []byte, sig1 wallet.Sig, a wallet.Address) (bool, error) {
+	sig, ok := (sig1.(*Sig))
+	if !ok {
+		return false, errors.New("Wrong signature type passed to Backend.VerifySignature")
+	}
+
 	addr, ok := a.(*Address)
 	if !ok {
-		log.Panic("Wrong address type passed to Backend.VerifySignature")
+		return false, errors.New("Wrong address type passed to Backend.VerifySignature")
 	}
 	pk := (*ecdsa.PublicKey)(addr)
 

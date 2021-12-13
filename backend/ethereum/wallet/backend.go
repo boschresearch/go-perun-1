@@ -15,26 +15,14 @@
 package wallet
 
 import (
-	"io"
-
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 
 	"perun.network/go-perun/wallet"
-	"perun.network/go-perun/wire/perunio"
 )
 
 // Backend implements the utility interface defined in the wallet package.
 type Backend struct{}
-
-// SigLen length of a signature in byte.
-// ref https://godoc.org/github.com/ethereum/go-ethereum/crypto/secp256k1#Sign
-// ref https://github.com/ethereum/go-ethereum/blob/54b271a86dd748f3b0bcebeaf678dc34e0d6177a/crypto/signature_cgo.go#L66
-const SigLen = 65
-
-// sigVSubtract value that is subtracted from the last byte of a signature if
-// the last bytes exceeds it.
-const sigVSubtract = 27
 
 // compile-time check that the ethereum backend implements the perun backend.
 var _ wallet.Backend = (*Backend)(nil)
@@ -46,9 +34,11 @@ func (b *Backend) NewAddress() wallet.Address {
 	return &addr
 }
 
-// DecodeSig reads a []byte with length of an ethereum signature.
-func (*Backend) DecodeSig(r io.Reader) (wallet.Sig, error) {
-	return DecodeSig(r)
+// NewAddress returns a variable of type Address, which can be used
+// for unmarshalling an address from its binary representation.
+func (*Backend) NewSig() wallet.Sig {
+	sig := Sig(make([]byte, SigLen))
+	return &sig
 }
 
 // VerifySignature verifies a signature.
@@ -56,18 +46,16 @@ func (*Backend) VerifySignature(msg []byte, sig wallet.Sig, a wallet.Address) (b
 	return VerifySignature(msg, sig, a)
 }
 
-// DecodeSig reads a []byte with length of an ethereum signature.
-func DecodeSig(r io.Reader) (wallet.Sig, error) {
-	buf := make(wallet.Sig, SigLen)
-	return buf, perunio.Decode(r, &buf)
-}
-
 // VerifySignature verifies if a signature was made by this account.
-func VerifySignature(msg []byte, sig wallet.Sig, a wallet.Address) (bool, error) {
+func VerifySignature(msg []byte, sig1 wallet.Sig, a wallet.Address) (bool, error) {
+	sig, ok := sig1.(*Sig)
+	if !ok {
+		return false, errors.New("signature was not of expected type")
+	}
 	hash := PrefixedHash(msg)
 	sigCopy := make([]byte, SigLen)
-	copy(sigCopy, sig)
-	if len(sigCopy) == SigLen && (sigCopy[SigLen-1] >= sigVSubtract) {
+	copy(sigCopy, *sig)
+	if sigCopy[SigLen-1] >= sigVSubtract {
 		sigCopy[SigLen-1] -= sigVSubtract
 	}
 	pk, err := crypto.SigToPub(hash, sigCopy)

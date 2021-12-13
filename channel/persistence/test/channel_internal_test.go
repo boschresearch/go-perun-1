@@ -14,54 +14,46 @@
 
 package test
 
-import (
-	"math/rand"
-	"testing"
+// func TestRequireEqualSigsTX(t *testing.T) {
+// 	prng := test.Prng(t)
+// 	equalSigsTableNegative := []struct {
+// 		s1 []wallet.Sig
+// 		s2 []wallet.Sig
+// 	}{
+// 		{initSigSlice(10, prng), make([]wallet.Sig, 10)},
+// 		{make([]wallet.Sig, 10), initSigSlice(10, prng)},
+// 		{[]wallet.Sig{{4, 3, 2, 1}}, []wallet.Sig{{1, 2, 3, 4}}},
+// 		{make([]wallet.Sig, 5), make([]wallet.Sig, 10)},
+// 		{make([]wallet.Sig, 10), make([]wallet.Sig, 5)},
+// 	}
+// 	equalSigsTablePositive := []struct {
+// 		s1 []wallet.Sig
+// 		s2 []wallet.Sig
+// 	}{
+// 		{nil, nil},
+// 		{nil, make([]wallet.Sig, 10)},
+// 		{make([]wallet.Sig, 10), nil},
+// 		{make([]wallet.Sig, 10), make([]wallet.Sig, 10)},
+// 		{[]wallet.Sig{{1, 2, 3, 4}}, []wallet.Sig{{1, 2, 3, 4}}},
+// 	}
 
-	"perun.network/go-perun/wallet"
-	"polycry.pt/poly-go/test"
-)
+// 	tt := test.NewTester(t)
+// 	for _, _c := range equalSigsTableNegative {
+// 		c := _c
+// 		tt.AssertFatal(func(t test.T) { requireEqualSigs(t, c.s1, c.s2) })
+// 	}
+// 	for _, c := range equalSigsTablePositive {
+// 		requireEqualSigs(t, c.s1, c.s2)
+// 	}
+// }
 
-func TestRequireEqualSigsTX(t *testing.T) {
-	prng := test.Prng(t)
-	equalSigsTableNegative := []struct {
-		s1 []wallet.Sig
-		s2 []wallet.Sig
-	}{
-		{initSigSlice(10, prng), make([]wallet.Sig, 10)},
-		{make([]wallet.Sig, 10), initSigSlice(10, prng)},
-		{[]wallet.Sig{{4, 3, 2, 1}}, []wallet.Sig{{1, 2, 3, 4}}},
-		{make([]wallet.Sig, 5), make([]wallet.Sig, 10)},
-		{make([]wallet.Sig, 10), make([]wallet.Sig, 5)},
-	}
-	equalSigsTablePositive := []struct {
-		s1 []wallet.Sig
-		s2 []wallet.Sig
-	}{
-		{nil, nil},
-		{nil, make([]wallet.Sig, 10)},
-		{make([]wallet.Sig, 10), nil},
-		{make([]wallet.Sig, 10), make([]wallet.Sig, 10)},
-		{[]wallet.Sig{{1, 2, 3, 4}}, []wallet.Sig{{1, 2, 3, 4}}},
-	}
-
-	tt := test.NewTester(t)
-	for _, _c := range equalSigsTableNegative {
-		c := _c
-		tt.AssertFatal(func(t test.T) { requireEqualSigs(t, c.s1, c.s2) })
-	}
-	for _, c := range equalSigsTablePositive {
-		requireEqualSigs(t, c.s1, c.s2)
-	}
-}
-
-func initSigSlice(length int, prng *rand.Rand) []wallet.Sig {
-	s := make([]wallet.Sig, length)
-	for i := range s {
-		s[i] = make(wallet.Sig, 32)
-		for j := 0; j < 32; j++ {
-			s[i][j] = byte(prng.Int())
-		}
-	}
-	return s
-}
+// func initSigSlice(length int, prng *rand.Rand) []wallet.Sig {
+// 	s := make([]wallet.Sig, length)
+// 	for i := range s {
+// 		s[i] = make(wallet.Sig, 32)
+// 		for j := 0; j < 32; j++ {
+// 			s[i][j] = byte(prng.Int())
+// 		}
+// 	}
+// 	return s
+// }
