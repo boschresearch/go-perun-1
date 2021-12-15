@@ -16,31 +16,32 @@ package wire_test
 
 import (
 	"io"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"perun.network/go-perun/wire"
+	"perun.network/go-perun/wire/perunio"
 	wiretest "perun.network/go-perun/wire/test"
 	"polycry.pt/poly-go/test"
 )
 
-var nilDecoder = func(io.Reader) (wire.Msg, error) { return nil, nil }
+var nilDecoder = func(io.Reader) (perunio.Msg, error) { return nil, nil }
 
 func TestType_Valid_String(t *testing.T) {
 	test.OnlyOnce(t)
 
-	const testTypeVal, testTypeStr = 252, "testTypeA"
-	testType := wire.Type(testTypeVal)
-	assert.False(t, testType.Valid(), "unregistered type should not be valid")
-	assert.Equal(t, strconv.Itoa(testTypeVal), testType.String(),
-		"unregistered type's String() should return its integer value")
+	const testTypeVal uint8 = 25
+	const testTypeStr string = "testTypeA"
+	testType := testTypeVal
+	assert.False(t, perunio.Valid(testType), "unregistered type should not be valid")
+	// assert.Equal(t, strconv.Itoa(testTypeVal), testType.String(),
+	// 	"unregistered type's String() should return its integer value")
 
-	wire.RegisterExternalDecoder(testTypeVal, nilDecoder, testTypeStr)
-	assert.True(t, testType.Valid(), "registered type should be valid")
-	assert.Equal(t, testTypeStr, testType.String(),
-		"registered type's String() should be 'testType'")
+	perunio.RegisterExternalDecoder(testTypeVal, nilDecoder, testTypeStr)
+	assert.True(t, perunio.Valid(testType), "registered type should be valid")
+	// assert.Equal(t, testTypeStr, testType.String(),
+	// 	"registered type's String() should be 'testType'")
 }
 
 func TestRegisterExternalDecoder(t *testing.T) {
@@ -48,13 +49,13 @@ func TestRegisterExternalDecoder(t *testing.T) {
 
 	const testTypeVal, testTypeStr = 251, "testTypeB"
 
-	wire.RegisterExternalDecoder(testTypeVal, nilDecoder, testTypeStr)
+	perunio.RegisterExternalDecoder(testTypeVal, nilDecoder, testTypeStr)
 	assert.Panics(t,
-		func() { wire.RegisterExternalDecoder(testTypeVal, nilDecoder, testTypeStr) },
+		func() { perunio.RegisterExternalDecoder(testTypeVal, nilDecoder, testTypeStr) },
 		"second registration of same type should fail",
 	)
 	assert.Panics(t,
-		func() { wire.RegisterExternalDecoder(wire.Ping, nilDecoder, "PingFail") },
+		func() { perunio.RegisterExternalDecoder(perunio.Ping, nilDecoder, "PingFail") },
 		"registration of internal type should fail",
 	)
 }

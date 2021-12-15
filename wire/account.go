@@ -18,11 +18,12 @@ import (
 	"io"
 
 	"perun.network/go-perun/wallet"
+	"perun.network/go-perun/wire/perunio"
 )
 
 func init() {
-	RegisterDecoder(AuthResponse,
-		func(r io.Reader) (Msg, error) {
+	perunio.RegisterDecoder(perunio.AuthResponse,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m AuthResponseMsg
 			return &m, m.Decode(r)
 		})
@@ -41,7 +42,7 @@ var _ Msg = (*AuthResponseMsg)(nil)
 type AuthResponseMsg struct{}
 
 // Type returns AuthResponse.
-func (m *AuthResponseMsg) Type() Type {
+func (m *AuthResponseMsg) Type() uint8 {
 	return AuthResponse
 }
 

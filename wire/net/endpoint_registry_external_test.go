@@ -26,6 +26,7 @@ import (
 	"perun.network/go-perun/wire"
 	"perun.network/go-perun/wire/net"
 	nettest "perun.network/go-perun/wire/net/test"
+	_ "perun.network/go-perun/wire/perunio/proxy"
 	ctxtest "polycry.pt/poly-go/context/test"
 	"polycry.pt/poly-go/sync"
 	"polycry.pt/poly-go/test"

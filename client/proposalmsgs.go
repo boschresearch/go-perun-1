@@ -31,38 +31,38 @@ import (
 )
 
 func init() {
-	wire.RegisterDecoder(wire.LedgerChannelProposal,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.LedgerChannelProposal,
+		func(r io.Reader) (perunio.Msg, error) {
 			m := LedgerChannelProposal{}
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.LedgerChannelProposalAcc,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.LedgerChannelProposalAcc,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m LedgerChannelProposalAcc
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.SubChannelProposal,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.SubChannelProposal,
+		func(r io.Reader) (perunio.Msg, error) {
 			m := SubChannelProposal{}
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.SubChannelProposalAcc,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.SubChannelProposalAcc,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m SubChannelProposalAcc
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.ChannelProposalRej,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.ChannelProposalRej,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m ChannelProposalRej
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.VirtualChannelProposal,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.VirtualChannelProposal,
+		func(r io.Reader) (perunio.Msg, error) {
 			m := VirtualChannelProposal{}
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.VirtualChannelProposalAcc,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(perunio.VirtualChannelProposalAcc,
+		func(r io.Reader) (perunio.Msg, error) {
 			m := VirtualChannelProposalAcc{}
 			return &m, m.Decode(r)
 		})
@@ -81,7 +81,7 @@ type (
 	// ChannelProposal is the interface that describes all channel proposal
 	// message types.
 	ChannelProposal interface {
-		wire.Msg
+		perunio.Msg
 		perunio.Decoder
 
 		// Base returns the channel proposal's common values.
@@ -282,8 +282,8 @@ func NewLedgerChannelProposal(
 }
 
 // Type returns wire.LedgerChannelProposal.
-func (LedgerChannelProposal) Type() wire.Type {
-	return wire.LedgerChannelProposal
+func (LedgerChannelProposal) Type() uint8 {
+	return perunio.LedgerChannelProposal
 }
 
 // ProposalID returns the identifier of this channel proposal request.
@@ -386,8 +386,8 @@ func (p *SubChannelProposal) Decode(r io.Reader) error {
 }
 
 // Type returns wire.SubChannelProposal.
-func (SubChannelProposal) Type() wire.Type {
-	return wire.SubChannelProposal
+func (SubChannelProposal) Type() uint8 {
+	return perunio.SubChannelProposal
 }
 
 // Accept constructs an accept message that belongs to a proposal message. It
@@ -417,7 +417,7 @@ type (
 	// ChannelProposalAccept is the generic interface for channel proposal
 	// accept messages.
 	ChannelProposalAccept interface {
-		wire.Msg
+		perunio.Msg
 		Base() *BaseChannelProposalAcc
 	}
 
@@ -473,8 +473,8 @@ func (acc *BaseChannelProposalAcc) Decode(r io.Reader) error {
 }
 
 // Type returns wire.ChannelProposalAcc.
-func (LedgerChannelProposalAcc) Type() wire.Type {
-	return wire.LedgerChannelProposalAcc
+func (LedgerChannelProposalAcc) Type() uint8 {
+	return perunio.LedgerChannelProposalAcc
 }
 
 // Base returns the common proposal accept values.
@@ -497,8 +497,8 @@ func (acc *LedgerChannelProposalAcc) Decode(r io.Reader) error {
 }
 
 // Type returns wire.SubChannelProposalAcc.
-func (SubChannelProposalAcc) Type() wire.Type {
-	return wire.SubChannelProposalAcc
+func (SubChannelProposalAcc) Type() uint8 {
+	return perunio.SubChannelProposalAcc
 }
 
 // Base returns the common proposal accept values.
@@ -527,8 +527,8 @@ type ChannelProposalRej struct {
 }
 
 // Type returns wire.ChannelProposalRej.
-func (ChannelProposalRej) Type() wire.Type {
-	return wire.ChannelProposalRej
+func (ChannelProposalRej) Type() uint8 {
+	return perunio.ChannelProposalRej
 }
 
 // Encode encodes a ChannelProposalRej into an io.Writer.
@@ -616,8 +616,8 @@ func (p *VirtualChannelProposal) Decode(r io.Reader) error {
 }
 
 // Type returns the message type.
-func (VirtualChannelProposal) Type() wire.Type {
-	return wire.VirtualChannelProposal
+func (VirtualChannelProposal) Type() uint8 {
+	return perunio.VirtualChannelProposal
 }
 
 // Accept constructs an accept message that belongs to a proposal message.
@@ -640,8 +640,8 @@ func (VirtualChannelProposal) Matches(acc ChannelProposalAccept) bool {
 }
 
 // Type returns the message type.
-func (VirtualChannelProposalAcc) Type() wire.Type {
-	return wire.VirtualChannelProposalAcc
+func (VirtualChannelProposalAcc) Type() uint8 {
+	return perunio.VirtualChannelProposalAcc
 }
 
 // Base returns the common proposal accept values.

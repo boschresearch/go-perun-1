@@ -23,8 +23,8 @@ import (
 )
 
 func init() {
-	wire.RegisterDecoder(wire.ChannelSync,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(wire.ChannelSync,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m msgChannelSync
 			return &m, m.Decode(r)
 		})
@@ -64,6 +64,6 @@ func (m *msgChannelSync) ID() channel.ID {
 }
 
 // Type implements wire.Type.
-func (m *msgChannelSync) Type() wire.Type {
+func (m *msgChannelSync) Type() uint8 {
 	return wire.ChannelSync
 }

@@ -22,9 +22,9 @@ import (
 )
 
 func init() {
-	RegisterDecoder(Ping, func(r io.Reader) (Msg, error) { var m PingMsg; return &m, m.Decode(r) })
-	RegisterDecoder(Pong, func(r io.Reader) (Msg, error) { var m PongMsg; return &m, m.Decode(r) })
-	RegisterDecoder(Shutdown, func(r io.Reader) (Msg, error) { var m ShutdownMsg; return &m, m.Decode(r) })
+	perunio.RegisterDecoder(perunio.Ping, func(r io.Reader) (perunio.Msg, error) { var m PingMsg; return &m, m.Decode(r) })
+	perunio.RegisterDecoder(perunio.Pong, func(r io.Reader) (perunio.Msg, error) { var m PongMsg; return &m, m.Decode(r) })
+	perunio.RegisterDecoder(perunio.Shutdown, func(r io.Reader) (perunio.Msg, error) { var m ShutdownMsg; return &m, m.Decode(r) })
 }
 
 // Since ping and pong messages are essentially the same, this is a common
@@ -57,7 +57,7 @@ type PingMsg struct {
 }
 
 // Type returns Ping.
-func (m *PingMsg) Type() Type {
+func (m *PingMsg) Type() uint8 {
 	return Ping
 }
 
@@ -75,7 +75,7 @@ type PongMsg struct {
 }
 
 // Type returns Pong.
-func (m *PongMsg) Type() Type {
+func (m *PongMsg) Type() uint8 {
 	return Pong
 }
 
@@ -100,6 +100,6 @@ func (m *ShutdownMsg) Decode(r io.Reader) error {
 }
 
 // Type implements msg.Type.
-func (m *ShutdownMsg) Type() Type {
+func (m *ShutdownMsg) Type() uint8 {
 	return Shutdown
 }

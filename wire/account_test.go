@@ -20,6 +20,7 @@ import (
 	_ "perun.network/go-perun/backend/ethereum/wallet/test" // random init
 	wallettest "perun.network/go-perun/wallet/test"
 	"perun.network/go-perun/wire"
+	_ "perun.network/go-perun/wire/perunio/proxy"
 	wiretest "perun.network/go-perun/wire/test"
 	pkgtest "polycry.pt/poly-go/test"
 )

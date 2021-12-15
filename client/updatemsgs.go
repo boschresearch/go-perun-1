@@ -24,28 +24,28 @@ import (
 )
 
 func init() {
-	wire.RegisterDecoder(wire.ChannelUpdate,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(wire.ChannelUpdate,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m msgChannelUpdate
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.ChannelUpdateAcc,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(wire.ChannelUpdateAcc,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m msgChannelUpdateAcc
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.ChannelUpdateRej,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(wire.ChannelUpdateRej,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m msgChannelUpdateRej
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.VirtualChannelFundingProposal,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(wire.VirtualChannelFundingProposal,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m virtualChannelFundingProposal
 			return &m, m.Decode(r)
 		})
-	wire.RegisterDecoder(wire.VirtualChannelSettlementProposal,
-		func(r io.Reader) (wire.Msg, error) {
+	perunio.RegisterDecoder(wire.VirtualChannelSettlementProposal,
+		func(r io.Reader) (perunio.Msg, error) {
 			var m virtualChannelSettlementProposal
 			return &m, m.Decode(r)
 		})
@@ -55,7 +55,7 @@ type (
 	// ChannelMsg are all messages that can be routed to a particular channel
 	// controller.
 	ChannelMsg interface {
-		wire.Msg
+		perunio.Msg
 		ID() channel.ID
 	}
 
@@ -75,7 +75,7 @@ type (
 
 	// ChannelUpdateProposal represents an abstract update proposal message.
 	ChannelUpdateProposal interface {
-		wire.Msg
+		perunio.Msg
 		perunio.Decoder
 		Base() *msgChannelUpdate
 	}
@@ -112,17 +112,17 @@ var (
 )
 
 // Type returns this message's type: ChannelUpdate.
-func (*msgChannelUpdate) Type() wire.Type {
+func (*msgChannelUpdate) Type() uint8 {
 	return wire.ChannelUpdate
 }
 
 // Type returns this message's type: ChannelUpdateAcc.
-func (*msgChannelUpdateAcc) Type() wire.Type {
+func (*msgChannelUpdateAcc) Type() uint8 {
 	return wire.ChannelUpdateAcc
 }
 
 // Type returns this message's type: ChannelUpdateRej.
-func (*msgChannelUpdateRej) Type() wire.Type {
+func (*msgChannelUpdateRej) Type() uint8 {
 	return wire.ChannelUpdateRej
 }
 
@@ -211,7 +211,7 @@ type (
 )
 
 // Type returns the message type.
-func (*virtualChannelFundingProposal) Type() wire.Type {
+func (*virtualChannelFundingProposal) Type() uint8 {
 	return wire.VirtualChannelFundingProposal
 }
 
@@ -249,7 +249,7 @@ func (m *virtualChannelFundingProposal) Decode(r io.Reader) (err error) {
 }
 
 // Type returns the message type.
-func (*virtualChannelSettlementProposal) Type() wire.Type {
+func (*virtualChannelSettlementProposal) Type() uint8 {
 	return wire.VirtualChannelSettlementProposal
 }
 

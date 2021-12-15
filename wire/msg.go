@@ -15,25 +15,32 @@
 package wire
 
 import (
-	"fmt"
 	"io"
-	"strconv"
-
-	"github.com/pkg/errors"
-
-	"perun.network/go-perun/wire/perunio"
 )
 
+var serializer Serializer
+
+// SetSerializer is.
+func SetSerializer(s Serializer) {
+	if serializer != nil {
+		panic("serializer already set")
+	}
+	serializer = s
+}
+
 type (
-	// Msg is the top-level abstraction for all messages sent between Perun
-	// nodes.
-	Msg interface {
-		// Type returns the message's type.
-		Type() Type
-		// encoding of payload. Type byte should not be encoded.
-		perunio.Encoder
+	// Serializer is.
+	Serializer interface {
+		EncodeEnvelope(w io.Writer, env *Envelope) error
+		DecodeEnvelope(r io.Reader, env *Envelope) error
+		EncodeMsg(msg Msg, w io.Writer) error
+		DecodeMsg(r io.Reader) (Msg, error)
 	}
 
+	// Msg is.
+	Msg interface {
+		Type() uint8
+	}
 	// An Envelope encapsulates a message with routing information, that is, the
 	// sender and intended recipient.
 	Envelope struct {
@@ -46,80 +53,58 @@ type (
 
 // Encode encodes an Envelope into an io.Writer.
 func (env *Envelope) Encode(w io.Writer) error {
-	if err := perunio.Encode(w, env.Sender, env.Recipient); err != nil {
-		return err
-	}
-	return Encode(env.Msg, w)
+	return serializer.EncodeEnvelope(w, env)
+	// if err := perunio.Encode(w, env.Sender, env.Recipient); err != nil {
+	// 	return err
+	// }
+	// return Encode(env.Msg, w)
 }
 
 // Decode decodes an Envelope from an io.Reader.
 func (env *Envelope) Decode(r io.Reader) (err error) {
-	env.Sender = NewAddress()
-	if err = perunio.Decode(r, env.Sender); err != nil {
-		return err
-	}
-	env.Recipient = NewAddress()
-	if err = perunio.Decode(r, env.Recipient); err != nil {
-		return err
-	}
-	env.Msg, err = Decode(r)
-	return err
+	return serializer.DecodeEnvelope(r, env)
+	// env.Sender = NewAddress()
+	// if err = perunio.Decode(r, env.Sender); err != nil {
+	// 	return err
+	// }
+	// env.Recipient = NewAddress()
+	// if err = perunio.Decode(r, env.Recipient); err != nil {
+	// 	return err
+	// }
+	// env.Msg, err = Decode(r)
+	// return err
 }
 
 // Encode encodes a message into an io.Writer. It also encodes the
 // message type whereas the Msg.Encode implementation is assumed not to write
 // the type.
 func Encode(msg Msg, w io.Writer) error {
-	// Encode the message type and payload
-	return perunio.Encode(w, byte(msg.Type()), msg)
+	return serializer.EncodeMsg(msg, w)
 }
+
+// 	// Encode the message type and payload
+// 	return perunio.Encode(w, byte(msg.Type()), msg)
+// }
 
 // Decode decodes a message from an io.Reader.
 func Decode(r io.Reader) (Msg, error) {
-	var t Type
-	if err := perunio.Decode(r, (*byte)(&t)); err != nil {
-		return nil, errors.WithMessage(err, "failed to decode message Type")
-	}
-
-	if !t.Valid() {
-		return nil, errors.Errorf("wire: no decoder known for message Type): %v", t)
-	}
-	return decoders[t](r)
+	return serializer.DecodeMsg(r)
 }
 
-var decoders = make(map[Type]func(io.Reader) (Msg, error))
+// 	var t Type
+// 	if err := perunio.Decode(r, (*byte)(&t)); err != nil {
+// 		return nil, errors.WithMessage(err, "failed to decode message Type")
+// 	}
 
-// RegisterDecoder sets the decoder of messages of Type `t`.
-func RegisterDecoder(t Type, decoder func(io.Reader) (Msg, error)) {
-	if decoders[t] != nil {
-		panic(fmt.Sprintf("wire: decoder for Type %v already set", t))
-	}
-
-	decoders[t] = decoder
-}
-
-// RegisterExternalDecoder sets the decoder of messages of external type `t`.
-// This is like RegisterDecoder but for message types not part of the Perun wire
-// protocol and thus not known natively. This can be used by users of the
-// framework to create additional message types and send them over the same
-// peer connection. It also comes in handy to register types for testing.
-func RegisterExternalDecoder(t Type, decoder func(io.Reader) (Msg, error), name string) {
-	if t < LastType {
-		panic("external decoders can only be registered for alien types")
-	}
-	RegisterDecoder(t, decoder)
-	// above registration panics if already set, so we don't need to check the
-	// next assignment.
-	typeNames[t] = name
-}
-
-// Type is an enumeration used for (de)serializing messages and
-// identifying a message's Type.
-type Type uint8
+// 	if !t.Valid() {
+// 		return nil, errors.Errorf("wire: no decoder known for message Type): %v", t)
+// 	}
+// 	return decoders[t](r)
+// }
 
 // Enumeration of message categories known to the Perun framework.
 const (
-	Ping Type = iota
+	Ping uint8 = iota
 	Pong
 	Shutdown
 	AuthResponse
@@ -138,39 +123,3 @@ const (
 	ChannelSync
 	LastType // upper bound on the message types of the Perun wire protocol
 )
-
-var typeNames = map[Type]string{
-	Ping:                             "Ping",
-	Pong:                             "Pong",
-	Shutdown:                         "Shutdown",
-	AuthResponse:                     "AuthResponse",
-	LedgerChannelProposal:            "LedgerChannelProposal",
-	LedgerChannelProposalAcc:         "LedgerChannelProposalAcc",
-	SubChannelProposal:               "SubChannelProposal",
-	SubChannelProposalAcc:            "SubChannelProposalAcc",
-	VirtualChannelProposal:           "VirtualChannelProposal",
-	VirtualChannelProposalAcc:        "VirtualChannelProposalAcc",
-	ChannelProposalRej:               "ChannelProposalRej",
-	ChannelUpdate:                    "ChannelUpdate",
-	VirtualChannelFundingProposal:    "VirtualChannelFundingProposal",
-	VirtualChannelSettlementProposal: "VirtualChannelSettlementProposal",
-	ChannelUpdateAcc:                 "ChannelUpdateAcc",
-	ChannelUpdateRej:                 "ChannelUpdateRej",
-	ChannelSync:                      "ChannelSync",
-}
-
-// String returns the name of a message type if it is valid and name known
-// or otherwise its numerical representation.
-func (t Type) String() string {
-	name, ok := typeNames[t]
-	if !ok {
-		return strconv.Itoa(int(t))
-	}
-	return name
-}
-
-// Valid checks whether a decoder is known for the type.
-func (t Type) Valid() bool {
-	_, ok := decoders[t]
-	return ok
-}

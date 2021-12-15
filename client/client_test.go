@@ -28,6 +28,7 @@ import (
 	wtest "perun.network/go-perun/wallet/test"
 	"perun.network/go-perun/watcher/local"
 	"perun.network/go-perun/wire"
+	_ "perun.network/go-perun/wire/perunio/proxy"
 	"polycry.pt/poly-go/test"
 )
 
