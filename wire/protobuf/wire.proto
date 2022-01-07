@@ -1,0 +1,244 @@
+// Copyright 2022 - See NOTICE file for copyright holders.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// Package protobuf contains proto buff definitions for wire messages and the
+// generated code for marshalling/unmarshalling messages to/from protobuf
+// format.
+package protobuf;
+
+
+// Option go_package is to specify the exact path where the generated go code
+// should reside.
+option go_package = ".";
+
+// Envelope
+message Envelope {
+    bytes sender = 1;
+    bytes recipient = 2;
+    oneof msg {
+        PingMsg pingMsg = 3;
+        PongMsg pongMsg = 4;
+        ShutdownMsg shutdownMsg = 5;
+        AuthResponseMsg authResponseMsg = 6;
+        LedgerChannelProposalMsg ledgerChannelProposalMsg = 7;
+        LedgerChannelProposalAccMsg ledgerChannelProposalAccMsg = 8;
+        SubChannelProposalMsg subChannelProposalMsg = 9;
+        SubChannelProposalAccMsg subChannelProposalAccMsg = 10;
+        VirtualChannelProposalMsg virtualChannelProposalMsg = 11;
+        VirtualChannelProposalAccMsg virtualChannelProposalAccMsg = 12;
+        ChannelProposalRejMsg channelProposalRejMsg = 13;
+        ChannelUpdateMsg channelUpdateMsg = 14;
+        VirtualChannelFundingProposalMsg virtualChannelFundingProposalMsg = 15;
+        VirtualChannelSettlementProposalMsg  virtualChannelSettlementProposalMsg = 16;
+        ChannelUpdateAccMsg channelUpdateAccMsg = 17;
+        ChannelUpdateRejMsg channelUpdateRejMsg = 18;
+        ChannelSyncMsg channelSyncMsg = 19;
+    }
+}
+
+// Primitives
+
+// Balance represents the balance of single assets for each of the channel
+// participants.
+message Balance {
+    repeated bytes balance = 1;
+}
+
+// Balances represents the balance of all the assets for each of the channel
+// participants.
+message Balances {
+    repeated Balance balances = 1;
+}
+
+message IndexMap {
+    repeated uint32 indexMap = 1;
+}
+
+message IndexMaps {
+    repeated IndexMap indexMaps = 1;
+}
+
+message SubAlloc {
+    bytes id = 1;
+    repeated bytes bals = 2;
+    IndexMap indexMap = 3;
+}
+
+message Allocation {
+    repeated bytes assets = 1;
+    Balances balances = 2;
+    repeated SubAlloc locked = 3;
+}
+
+message BaseChannelProposal {
+	uint64 challengeDuration = 1;
+	bytes nonceShare = 2;
+	bytes app = 3;
+	bytes initData = 4;
+    Allocation InitBals = 5;
+    Balances FundingAgreement = 6;
+}
+
+message BaseChannelProposalAcc {
+    bytes proposalID = 1;
+    bytes nonceShare = 2;
+}
+
+message Params {
+    bytes id = 1;
+	uint64 challengeDuration = 2;
+    repeated bytes parts = 3;
+    bytes app = 4;
+    bytes nonce = 5;
+	bool ledgerChannel = 6;
+	bool virtualChannel = 7;
+}
+
+message State {
+    bytes id = 1;
+    uint64 version = 2;
+    bytes app = 3;
+    Allocation allocation = 4;
+    bytes data = 5;
+    bool IsFinal = 6;
+}
+
+message Transaction {
+    State state = 1;
+    repeated bytes sigs = 2;
+}
+
+message SignedState {
+	Params params = 1;
+	State  state = 2;
+    repeated bytes sigs = 3;
+}
+
+message ChannelUpdate {
+    State state = 1;
+    uint32 ActorIdx = 2;
+}
+
+// Different types of message
+
+/* |  0 | ping type = iota */
+message PingMsg {
+    int64 created = 1;
+}
+
+/* |  1 | pong */
+message PongMsg {
+    int64 created = 1;
+}
+
+/* |  2 | shutdown */
+message ShutdownMsg {
+    string reason = 1;
+}
+
+/* |  3 | authresponse */
+message AuthResponseMsg {
+}
+
+/* |  4 | ledgerchannelproposal */
+message LedgerChannelProposalMsg {
+    BaseChannelProposal baseChannelProposal = 1;
+    bytes participant = 2;
+    repeated bytes peers = 3;
+}
+
+/* |  5 | ledgerchannelproposalacc */
+message LedgerChannelProposalAccMsg {
+    BaseChannelProposalAcc baseChannelProposalAcc = 1;
+    bytes participant = 2;
+}
+
+/* |  6 | subchannelproposal */
+message SubChannelProposalMsg {
+    BaseChannelProposal baseChannelProposal = 1;
+    bytes parent = 2;
+}
+
+/* |  7 | subchannelproposalacc */
+message SubChannelProposalAccMsg {
+    BaseChannelProposalAcc baseChannelProposalAcc = 1;
+}
+
+/* |  8 | virtualchannelproposal */
+message VirtualChannelProposalMsg {
+    BaseChannelProposal baseChannelProposal = 1;
+    bytes proposer = 2;
+    repeated bytes peers = 3;
+    repeated bytes parents = 4;
+    IndexMaps indexMaps = 5;
+}
+
+/* |  9 | virtualchannelproposalacc */
+message VirtualChannelProposalAccMsg {
+    BaseChannelProposalAcc baseChannelProposalAcc = 1;
+    bytes responder = 2;
+}
+
+ /* | 10 | channelproposalrej */
+message ChannelProposalRejMsg {
+    bytes proposalID = 1;
+    string reason = 2;
+}
+
+/* | 11 | channelupdate */
+message ChannelUpdateMsg {
+    ChannelUpdate channelUpdate = 1;
+    bytes sig = 2;
+}
+
+
+/* | 12 | virtualchannelfundingproposal */
+message VirtualChannelFundingProposalMsg {
+    ChannelUpdateMsg channelUpdateMsg = 1;
+    SignedState initial = 2;
+    IndexMap indexMap = 3;
+}
+
+/* | 13 | virtualchannelsettlementproposal */
+message VirtualChannelSettlementProposalMsg {
+    ChannelUpdateMsg channelUpdateMsg = 1;
+    SignedState final = 2;
+}
+
+
+/* | 14 | channelupdateacc */
+message ChannelUpdateAccMsg {
+    bytes channelID = 1;
+    uint64 version = 2;
+    bytes sig = 3;
+}
+
+/* | 15 | channelupdaterej */
+message ChannelUpdateRejMsg {
+    bytes channelID = 1;
+    uint64 version = 2;
+    string reason = 3;
+}
+
+
+/* | 16 | channelsync */
+message ChannelSyncMsg {
+    uint32 phase = 1;
+    Transaction currentTx = 2;
+}
+
+/* | 17 | lasttype */
+
