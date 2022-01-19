@@ -21,6 +21,7 @@ func Test_Msg_Encode_Decode(t *testing.T) {
 	rng := pkgtest.Prng(t)
 	app := client.WithApp(test.NewRandomAppAndData(rng))
 	subChP, _ := clienttest.NewRandomSubChannelProposal(rng, client.WithNonceFrom(rng), app)
+	virtChP, _ := clienttest.NewRandomVirtualChannelProposal(rng, client.WithNonceFrom(rng), app)
 	tests := []struct {
 		name string
 		msg  wire.Msg
@@ -31,6 +32,7 @@ func Test_Msg_Encode_Decode(t *testing.T) {
 		{name: "authResponse", msg: &wire.AuthResponseMsg{}},
 		{name: "ledgerChannelProposal", msg: clienttest.NewRandomLedgerChannelProposal(rng, client.WithNonceFrom(rng), app)},
 		{name: "subChannelProposal", msg: subChP},
+		{name: "virutalChannelProposal", msg: virtChP},
 	}
 
 	for _, tc := range tests {

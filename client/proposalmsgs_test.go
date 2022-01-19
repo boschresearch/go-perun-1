@@ -65,15 +65,14 @@ func TestChannelProposalReqSerialization(t *testing.T) {
 		switch i % 3 {
 		case 0:
 			m = clienttest.NewRandomLedgerChannelProposal(rng, client.WithNonceFrom(rng), app)
-			protobuftest.MsgSerializerTest(t, m)
 		case 1:
 			m, err = clienttest.NewRandomSubChannelProposal(rng, client.WithNonceFrom(rng), app)
 			require.NoError(t, err)
-			protobuftest.MsgSerializerTest(t, m)
 		case 2:
 			m, err = clienttest.NewRandomVirtualChannelProposal(rng, client.WithNonceFrom(rng), app)
 			require.NoError(t, err)
 		}
+		protobuftest.MsgSerializerTest(t, m)
 		peruniotest.MsgSerializerTest(t, m)
 	}
 }

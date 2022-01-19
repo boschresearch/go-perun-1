@@ -67,6 +67,15 @@ func EncodeEnvelope(env wire.Envelope) ([]byte, error) {
 		grpcMsg = &Envelope_SubChannelProposalMsg{
 			SubChannelProposalMsg: subChannelProposal,
 		}
+	case wire.VirtualChannelProposal:
+		msg := env.Msg.(*client.VirtualChannelProposal)
+		virtualChannelProposal, err := ToVirtualChannelProposal(msg)
+		if err != nil {
+			return nil, err
+		}
+		grpcMsg = &Envelope_VirtualChannelProposalMsg{
+			VirtualChannelProposalMsg: virtualChannelProposal,
+		}
 	}
 
 	protoEnv := Envelope{
@@ -119,6 +128,8 @@ func DecodeEnvelope(data []byte) (wire.Envelope, error) {
 		env.Msg, err = FromLedgerChannelProposal(protoEnv.GetLedgerChannelProposalMsg())
 	case *Envelope_SubChannelProposalMsg:
 		env.Msg, err = FromSubChannelProposal(protoEnv.GetSubChannelProposalMsg())
+	case *Envelope_VirtualChannelProposalMsg:
+		env.Msg, err = FromVirtualChannelProposal(protoEnv.GetVirtualChannelProposalMsg())
 	}
 
 	return env, err
@@ -156,6 +167,37 @@ func FromSubChannelProposal(p *SubChannelProposalMsg) (*client.SubChannelProposa
 	}
 	copy(q.Parent[:], p.Parent)
 	return q, nil
+}
+
+func FromVirtualChannelProposal(p *VirtualChannelProposalMsg) (*client.VirtualChannelProposal, error) {
+	baseChannelProposal, err := FromGrpcBaseChannelProposal(p.BaseChannelProposal)
+	if err != nil {
+		return nil, err
+	}
+	proposer, err := FromGrpcWalletAddr(p.Proposer)
+	if err != nil {
+		return nil, err
+	}
+	peers, err := FromGrpcWireAddrs(p.Peers)
+	if err != nil {
+		return nil, err
+	}
+	parents := make([]channel.ID, len(p.Parents))
+	for i := range p.Parents {
+		copy(parents[i][:], p.Parents[i])
+	}
+	indexMaps := make([][]channel.Index, len(p.IndexMaps.IndexMaps))
+	for i := range p.Parents {
+		indexMaps[i] = FromGrpcIndexMap(p.IndexMaps.IndexMaps[i].IndexMap)
+	}
+
+	return &client.VirtualChannelProposal{
+		BaseChannelProposal: baseChannelProposal,
+		Proposer:            proposer,
+		Peers:               peers,
+		Parents:             parents,
+		IndexMaps:           indexMaps,
+	}, nil
 }
 
 func FromGrpcWalletAddr(a []byte) (wallet.Address, error) {
@@ -260,15 +302,9 @@ func FromGrpcBalance(bal *Balance) []channel.Bal {
 }
 
 func FromGrpcSubAlloc(a *SubAlloc) (channel.SubAlloc, error) {
-	// In tests, include a test for type of index map is uint16
-	indexMap := make([]channel.Index, len(a.IndexMap.IndexMap))
-	for i := range a.IndexMap.IndexMap {
-		indexMap[i] = channel.Index(uint16(a.IndexMap.IndexMap[i]))
-	}
-
 	subAlloc := channel.SubAlloc{
 		Bals:     FromGrpcBalance(a.Bals),
-		IndexMap: indexMap,
+		IndexMap: FromGrpcIndexMap(a.IndexMap.IndexMap),
 	}
 	if len(a.Id) != len(subAlloc.ID) {
 		return channel.SubAlloc{}, errors.New("sub alloc id has incorrect length")
@@ -277,6 +313,16 @@ func FromGrpcSubAlloc(a *SubAlloc) (channel.SubAlloc, error) {
 
 	return subAlloc, nil
 }
+
+func FromGrpcIndexMap(im []uint32) []channel.Index {
+	// In tests, include a test for type of index map is uint16
+	indexMap := make([]channel.Index, len(im))
+	for i := range im {
+		indexMap[i] = channel.Index(uint16(im[i]))
+	}
+	return indexMap
+}
+
 func ToLedgerChannelProposal(p *client.LedgerChannelProposal) (*LedgerChannelProposalMsg, error) {
 	baseChannelProposal, err := ToGrpcBaseChannelProposal(p.BaseChannelProposal)
 	if err != nil {
@@ -312,6 +358,38 @@ func ToSubChannelProposal(p *client.SubChannelProposal) (*SubChannelProposalMsg,
 	copy(q.Parent, p.Parent[:])
 
 	return q, nil
+}
+
+func ToVirtualChannelProposal(p *client.VirtualChannelProposal) (*VirtualChannelProposalMsg, error) {
+	baseChannelProposal, err := ToGrpcBaseChannelProposal(p.BaseChannelProposal)
+	if err != nil {
+		return nil, err
+	}
+	proposer, err := ToGrpcWalletAddr(p.Proposer)
+	if err != nil {
+		return nil, err
+	}
+	peers, err := ToGrpcWireAddrs(p.Peers)
+	if err != nil {
+		return nil, err
+	}
+	parents := make([][]byte, len(p.Parents))
+	for i := range p.Parents {
+		parents[i] = make([]byte, len(p.Parents[i]))
+		copy(parents[i], p.Parents[i][:])
+	}
+	indexMaps := make([]*IndexMap, len(p.IndexMaps))
+	for i := range p.IndexMaps {
+		indexMaps[i] = &IndexMap{IndexMap: ToGrpcIndexMap(p.IndexMaps[i])}
+	}
+
+	return &VirtualChannelProposalMsg{
+		BaseChannelProposal: baseChannelProposal,
+		Proposer:            proposer,
+		Peers:               peers,
+		Parents:             parents,
+		IndexMaps:           &IndexMaps{IndexMaps: indexMaps},
+	}, nil
 }
 
 func ToGrpcWalletAddr(a wallet.Address) ([]byte, error) {
@@ -418,10 +496,6 @@ func ToGrpcBalance(bal []channel.Bal) (*Balance, error) {
 }
 
 func ToGrpcSubAlloc(a channel.SubAlloc) (*SubAlloc, error) {
-	indexMap := make([]uint32, len(a.IndexMap))
-	for i := range a.IndexMap {
-		indexMap[i] = uint32(a.IndexMap[i])
-	}
 
 	bals, err := ToGrpcBalance(a.Bals)
 	if err != nil {
@@ -432,7 +506,15 @@ func ToGrpcSubAlloc(a channel.SubAlloc) (*SubAlloc, error) {
 		Id:   a.ID[:],
 		Bals: bals,
 		IndexMap: &IndexMap{
-			IndexMap: indexMap,
+			IndexMap: ToGrpcIndexMap(a.IndexMap),
 		},
 	}, nil
+}
+
+func ToGrpcIndexMap(im []channel.Index) []uint32 {
+	indexMap := make([]uint32, len(im))
+	for i := range im {
+		indexMap[i] = uint32(im[i])
+	}
+	return indexMap
 }
