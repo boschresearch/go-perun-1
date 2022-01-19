@@ -69,6 +69,7 @@ func TestChannelProposalReqSerialization(t *testing.T) {
 		case 1:
 			m, err = clienttest.NewRandomSubChannelProposal(rng, client.WithNonceFrom(rng), app)
 			require.NoError(t, err)
+			protobuftest.MsgSerializerTest(t, m)
 		case 2:
 			m, err = clienttest.NewRandomVirtualChannelProposal(rng, client.WithNonceFrom(rng), app)
 			require.NoError(t, err)

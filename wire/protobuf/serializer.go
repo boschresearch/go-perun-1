@@ -58,6 +58,15 @@ func EncodeEnvelope(env wire.Envelope) ([]byte, error) {
 		grpcMsg = &Envelope_LedgerChannelProposalMsg{
 			LedgerChannelProposalMsg: ledgerChannelProposal,
 		}
+	case wire.SubChannelProposal:
+		msg := env.Msg.(*client.SubChannelProposal)
+		subChannelProposal, err := ToSubChannelProposal(msg)
+		if err != nil {
+			return nil, err
+		}
+		grpcMsg = &Envelope_SubChannelProposalMsg{
+			SubChannelProposalMsg: subChannelProposal,
+		}
 	}
 
 	protoEnv := Envelope{
@@ -106,9 +115,10 @@ func DecodeEnvelope(data []byte) (wire.Envelope, error) {
 		}
 	case *Envelope_AuthResponseMsg:
 		env.Msg = &wire.AuthResponseMsg{}
-
 	case *Envelope_LedgerChannelProposalMsg:
 		env.Msg, err = FromLedgerChannelProposal(protoEnv.GetLedgerChannelProposalMsg())
+	case *Envelope_SubChannelProposalMsg:
+		env.Msg, err = FromSubChannelProposal(protoEnv.GetSubChannelProposalMsg())
 	}
 
 	return env, err
@@ -134,6 +144,18 @@ func FromLedgerChannelProposal(p *LedgerChannelProposalMsg) (*client.LedgerChann
 		Participant:         participant,
 		Peers:               peers,
 	}, nil
+}
+
+func FromSubChannelProposal(p *SubChannelProposalMsg) (*client.SubChannelProposal, error) {
+	baseChannelProposal, err := FromGrpcBaseChannelProposal(p.BaseChannelProposal)
+	if err != nil {
+		return nil, err
+	}
+	q := &client.SubChannelProposal{
+		BaseChannelProposal: baseChannelProposal,
+	}
+	copy(q.Parent[:], p.Parent)
+	return q, nil
 }
 
 func FromGrpcWalletAddr(a []byte) (wallet.Address, error) {
@@ -274,6 +296,22 @@ func ToLedgerChannelProposal(p *client.LedgerChannelProposal) (*LedgerChannelPro
 		Participant:         participant,
 		Peers:               peers,
 	}, nil
+}
+
+func ToSubChannelProposal(p *client.SubChannelProposal) (*SubChannelProposalMsg, error) {
+	baseChannelProposal, err := ToGrpcBaseChannelProposal(p.BaseChannelProposal)
+	if err != nil {
+		return nil, err
+	}
+
+	q := &SubChannelProposalMsg{
+		BaseChannelProposal: baseChannelProposal,
+
+		Parent: make([]byte, len(p.Parent)),
+	}
+	copy(q.Parent, p.Parent[:])
+
+	return q, nil
 }
 
 func ToGrpcWalletAddr(a wallet.Address) ([]byte, error) {
