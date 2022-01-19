@@ -19,16 +19,26 @@ import (
 
 	"perun.network/go-perun/wire"
 	peruniotest "perun.network/go-perun/wire/perunio/test"
+	protobuftest "perun.network/go-perun/wire/protobuf/test"
 )
 
 func TestPingMsg(t *testing.T) {
-	peruniotest.MsgSerializerTest(t, wire.NewPingMsg())
+	msg := wire.NewPingMsg()
+
+	peruniotest.MsgSerializerTest(t, msg)
+	protobuftest.MsgSerializerTest(t, msg)
 }
 
 func TestPongMsg(t *testing.T) {
-	peruniotest.MsgSerializerTest(t, wire.NewPongMsg())
+	msg := wire.NewPongMsg()
+
+	peruniotest.MsgSerializerTest(t, msg)
+	protobuftest.MsgSerializerTest(t, msg)
 }
 
 func TestShutdownMsg(t *testing.T) {
-	peruniotest.MsgSerializerTest(t, &wire.ShutdownMsg{"m2384ordkln fb30954390582"})
+	msg := &wire.ShutdownMsg{"m2384ordkln fb30954390582"}
+
+	peruniotest.MsgSerializerTest(t, msg)
+	protobuftest.MsgSerializerTest(t, msg)
 }

@@ -73,7 +73,7 @@ message IndexMaps {
 
 message SubAlloc {
     bytes id = 1;
-    repeated bytes bals = 2;
+    Balance bals = 2;
     IndexMap indexMap = 3;
 }
 

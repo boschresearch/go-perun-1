@@ -27,6 +27,7 @@ import (
 	wallettest "perun.network/go-perun/wallet/test"
 	"perun.network/go-perun/wire"
 	peruniotest "perun.network/go-perun/wire/perunio/test"
+	protobuftest "perun.network/go-perun/wire/protobuf/test"
 	pkgtest "polycry.pt/poly-go/test"
 )
 
@@ -64,6 +65,7 @@ func TestChannelProposalReqSerialization(t *testing.T) {
 		switch i % 3 {
 		case 0:
 			m = clienttest.NewRandomLedgerChannelProposal(rng, client.WithNonceFrom(rng), app)
+			protobuftest.MsgSerializerTest(t, m)
 		case 1:
 			m, err = clienttest.NewRandomSubChannelProposal(rng, client.WithNonceFrom(rng), app)
 			require.NoError(t, err)
