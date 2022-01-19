@@ -59,9 +59,9 @@ func TestChannelProposalReqSerialization(t *testing.T) {
 			m   wire.Msg
 			err error
 		)
-		// if i&1 == 0 {
-		app = client.WithApp(test.NewRandomAppAndData(rng))
-		// }
+		if i&1 == 0 {
+			app = client.WithApp(test.NewRandomAppAndData(rng))
+		}
 		switch i % 3 {
 		case 0:
 			m = clienttest.NewRandomLedgerChannelProposal(rng, client.WithNonceFrom(rng), app)

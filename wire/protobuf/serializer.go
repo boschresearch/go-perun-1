@@ -155,21 +155,28 @@ func FromGrpcWireAddrs(addrs [][]byte) (grpcAddrs []wire.Address, err error) {
 }
 
 func FromGrpcBaseChannelProposal(p *BaseChannelProposal) (client.BaseChannelProposal, error) {
+	var app channel.App
+	var initData channel.Data
+	var err error
+	if len(p.App) > 0 {
+		appDef := wallet.NewAddress()
+		err := appDef.UnmarshalBinary(p.App)
+		if err != nil {
+			return client.BaseChannelProposal{}, errors.WithMessage(err, "unmarshalling app def")
+		}
+		app, err = channel.Resolve(appDef)
+		if err != nil {
+			return client.BaseChannelProposal{}, errors.WithMessage(err, "resolving app def")
+		}
 
-	appDef := wallet.NewAddress()
-	err := appDef.UnmarshalBinary(p.App)
-	if err != nil {
-		return client.BaseChannelProposal{}, errors.WithMessage(err, "unmarshalling app def")
-	}
-	app, err := channel.Resolve(appDef)
-	if err != nil {
-		return client.BaseChannelProposal{}, errors.WithMessage(err, "resolving app def")
-	}
-
-	initData := app.NewData()
-	err = initData.UnmarshalBinary(p.InitData)
-	if err != nil {
-		return client.BaseChannelProposal{}, errors.WithMessage(err, "marshalling data")
+		initData = app.NewData()
+		err = initData.UnmarshalBinary(p.InitData)
+		if err != nil {
+			return client.BaseChannelProposal{}, errors.WithMessage(err, "marshalling data")
+		}
+	} else {
+		app = channel.NoApp()
+		initData = channel.NoData()
 	}
 
 	initBals, err := FromGrpcAllocation(p.InitBals)
@@ -285,13 +292,18 @@ func ToGrpcWireAddrs(addrs []wire.Address) (grpcAddrs [][]byte, err error) {
 }
 
 func ToGrpcBaseChannelProposal(p client.BaseChannelProposal) (*BaseChannelProposal, error) {
-	app, err := p.App.Def().MarshalBinary()
-	if err != nil {
-		return nil, errors.WithMessage(err, "marshalling app")
-	}
-	initData, err := p.InitData.MarshalBinary()
-	if err != nil {
-		return nil, errors.WithMessage(err, "marshalling data")
+	var app []byte
+	var initData []byte
+	var err error
+	if !channel.IsNoApp(p.App) {
+		app, err = p.App.Def().MarshalBinary()
+		if err != nil {
+			return nil, errors.WithMessage(err, "marshalling app")
+		}
+		initData, err = p.InitData.MarshalBinary()
+		if err != nil {
+			return nil, errors.WithMessage(err, "marshalling data")
+		}
 	}
 	initBals, err := ToGrpcAllocation(*p.InitBals)
 	if err != nil {
