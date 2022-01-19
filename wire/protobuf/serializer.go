@@ -1,6 +1,7 @@
 package protobuf
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
@@ -70,6 +71,7 @@ func EncodeEnvelope(env wire.Envelope) ([]byte, error) {
 }
 
 func DecodeEnvelope(data []byte) (wire.Envelope, error) {
+	var err error
 	var protoEnv Envelope
 	if err := proto.Unmarshal(data, &protoEnv); err != nil {
 		return wire.Envelope{}, errors.Wrap(err, "unmarshalling envelope")
@@ -105,12 +107,147 @@ func DecodeEnvelope(data []byte) (wire.Envelope, error) {
 	case *Envelope_AuthResponseMsg:
 		env.Msg = &wire.AuthResponseMsg{}
 
+	case *Envelope_LedgerChannelProposalMsg:
+		env.Msg, err = FromLedgerChannelProposal(protoEnv.GetLedgerChannelProposalMsg())
 	}
 
-	return env, nil
+	return env, err
 
 }
 
+func FromLedgerChannelProposal(p *LedgerChannelProposalMsg) (*client.LedgerChannelProposal, error) {
+	baseChannelProposal, err := FromGrpcBaseChannelProposal(p.BaseChannelProposal)
+	if err != nil {
+		return nil, err
+	}
+	participant, err := FromGrpcWalletAddr(p.Participant)
+	if err != nil {
+		return nil, err
+	}
+	peers, err := FromGrpcWireAddrs(p.Peers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client.LedgerChannelProposal{
+		BaseChannelProposal: baseChannelProposal,
+		Participant:         participant,
+		Peers:               peers,
+	}, nil
+}
+
+func FromGrpcWalletAddr(a []byte) (wallet.Address, error) {
+	addr := wallet.NewAddress()
+	err := addr.UnmarshalBinary(a)
+	return addr, err
+}
+
+func FromGrpcWireAddrs(addrs [][]byte) (grpcAddrs []wire.Address, err error) {
+	grpcAddrs = make([]wire.Address, len(addrs))
+	for i := range addrs {
+		grpcAddrs[i] = wire.NewAddress()
+		err = grpcAddrs[i].UnmarshalBinary(addrs[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return grpcAddrs, nil
+}
+
+func FromGrpcBaseChannelProposal(p *BaseChannelProposal) (client.BaseChannelProposal, error) {
+
+	appDef := wallet.NewAddress()
+	err := appDef.UnmarshalBinary(p.App)
+	if err != nil {
+		return client.BaseChannelProposal{}, errors.WithMessage(err, "unmarshalling app def")
+	}
+	app, err := channel.Resolve(appDef)
+	if err != nil {
+		return client.BaseChannelProposal{}, errors.WithMessage(err, "resolving app def")
+	}
+
+	initData := app.NewData()
+	err = initData.UnmarshalBinary(p.InitData)
+	if err != nil {
+		return client.BaseChannelProposal{}, errors.WithMessage(err, "marshalling data")
+	}
+
+	initBals, err := FromGrpcAllocation(p.InitBals)
+	if err != nil {
+		return client.BaseChannelProposal{}, errors.WithMessage(err, "encoding init bals")
+	}
+	fundingAgreement := FromGrpcBalances(p.FundingAgreement)
+	if err != nil {
+		return client.BaseChannelProposal{}, errors.WithMessage(err, "encoding init bals")
+	}
+	bp := client.BaseChannelProposal{
+		ChallengeDuration: p.ChallengeDuration,
+		App:               app,
+		InitData:          initData,
+		InitBals:          &initBals,
+		FundingAgreement:  fundingAgreement,
+	}
+	copy(bp.NonceShare[:], p.NonceShare)
+	return bp, nil
+}
+
+func FromGrpcAllocation(a *Allocation) (channel.Allocation, error) {
+	var err error
+	assets := make([]channel.Asset, len(a.Assets))
+	for i := range a.Assets {
+		assets[i] = channel.NewAsset()
+		err = assets[i].UnmarshalBinary(a.Assets[i])
+		if err != nil {
+			return channel.Allocation{}, errors.WithMessagef(err, "marshalling %d'th asset", i)
+		}
+	}
+
+	locked := make([]channel.SubAlloc, len(a.Locked))
+	for i := range a.Locked {
+		locked[i], err = FromGrpcSubAlloc(a.Locked[i])
+	}
+
+	return channel.Allocation{
+		Assets:   assets,
+		Balances: FromGrpcBalances(a.Balances),
+		Locked:   locked,
+	}, nil
+}
+
+func FromGrpcBalances(bals *Balances) (grpcBals channel.Balances) {
+	grpcBals = make([][]channel.Bal, len(bals.Balances))
+	for i := range bals.Balances {
+		grpcBals[i] = FromGrpcBalance(bals.Balances[i])
+	}
+	return grpcBals
+}
+
+func FromGrpcBalance(bal *Balance) []channel.Bal {
+	grpcBal := make([]channel.Bal, len(bal.Balance))
+	for j := range bal.Balance {
+		grpcBal[j] = new(big.Int).SetBytes(bal.Balance[j])
+	}
+	return grpcBal
+}
+
+func FromGrpcSubAlloc(a *SubAlloc) (channel.SubAlloc, error) {
+	// In tests, include a test for type of index map is uint16
+	indexMap := make([]channel.Index, len(a.IndexMap.IndexMap))
+	for i := range a.IndexMap.IndexMap {
+		indexMap[i] = channel.Index(uint16(a.IndexMap.IndexMap[i]))
+	}
+
+	subAlloc := channel.SubAlloc{
+		Bals:     FromGrpcBalance(a.Bals),
+		IndexMap: indexMap,
+	}
+	if len(a.Id) != len(subAlloc.ID) {
+		return channel.SubAlloc{}, errors.New("sub alloc id has incorrect length")
+	}
+	copy(subAlloc.ID[:], a.Id)
+
+	return subAlloc, nil
+}
 func ToLedgerChannelProposal(p *client.LedgerChannelProposal) (*LedgerChannelProposalMsg, error) {
 	baseChannelProposal, err := ToGrpcBaseChannelProposal(p.BaseChannelProposal)
 	if err != nil {
@@ -207,7 +344,9 @@ func ToGrpcBalances(bals channel.Balances) (grpcBals *Balances, err error) {
 	}
 	for i := range bals {
 		grpcBals.Balances[i], err = ToGrpcBalance(bals[i])
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 	return grpcBals, nil
 }
