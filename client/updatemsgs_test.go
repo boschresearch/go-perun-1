@@ -35,7 +35,20 @@ func TestChannelUpdateRejSerialization(t *testing.T) {
 			Version:   uint64(rng.Int63()),
 			Reason:    newRandomString(rng, 16, 16),
 		}
-		m.Reason = "some random reason"
+		peruniotest.MsgSerializerTest(t, m)
+		protobuftest.MsgSerializerTest(t, m)
+	}
+}
+
+func TestChannelUpdateAccSerialization(t *testing.T) {
+	rng := pkgtest.Prng(t)
+	for i := 0; i < 4; i++ {
+		sig := newRandomSig(rng)
+		m := &client.MsgChannelUpdateAcc{
+			ChannelID: test.NewRandomChannelID(rng),
+			Version:   uint64(rng.Int63()),
+			Sig:       sig,
+		}
 		peruniotest.MsgSerializerTest(t, m)
 		protobuftest.MsgSerializerTest(t, m)
 	}

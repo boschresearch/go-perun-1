@@ -217,7 +217,7 @@ func (c *Channel) updateGeneric(
 		return newPeerRejectedError("channel update", rej.Reason)
 	}
 
-	acc, ok := res.(*msgChannelUpdateAcc) // safe by predicate of the updateResRecv
+	acc, ok := res.(*MsgChannelUpdateAcc) // safe by predicate of the updateResRecv
 	if !ok {
 		log.Panic("wrong message type")
 	}
@@ -336,7 +336,7 @@ func (c *Channel) handleUpdateAcc(
 		c.Parent().registerSubChannelSettlement(c.ID(), req.Base().State.Balances)
 	}
 
-	msgUpAcc := &msgChannelUpdateAcc{
+	msgUpAcc := &MsgChannelUpdateAcc{
 		ChannelID: c.ID(),
 		Version:   req.Base().State.Version,
 		Sig:       sig,

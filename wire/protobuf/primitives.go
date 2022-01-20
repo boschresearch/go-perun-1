@@ -111,6 +111,16 @@ func toChannelProposalRej(in *ChannelProposalRejMsg) (out *client.ChannelProposa
 	return
 }
 
+func toChannelUpdateAcc(in *ChannelUpdateAccMsg) (out *client.MsgChannelUpdateAcc) {
+	out = &client.MsgChannelUpdateAcc{
+		Version: in.Version,
+		Sig:     wallet.Sig(make([]byte, len(in.Sig))),
+	}
+	copy(out.ChannelID[:], in.ChannelID)
+	copy(out.Sig, in.Sig)
+	return
+}
+
 func toChannelUpdateRej(in *ChannelUpdateRejMsg) (out *client.MsgChannelUpdateRej) {
 	out = &client.MsgChannelUpdateRej{
 		Version: in.Version,
@@ -359,6 +369,16 @@ func fromChannelUpdateRej(in *client.MsgChannelUpdateRej) (out *ChannelUpdateRej
 		Reason:    in.Reason,
 	}
 	copy(out.ChannelID, in.ChannelID[:])
+	return
+}
+func fromChannelUpdateAcc(in *client.MsgChannelUpdateAcc) (out *ChannelUpdateAccMsg) {
+	out = &ChannelUpdateAccMsg{
+		ChannelID: make([]byte, len(in.ChannelID)),
+		Version:   in.Version,
+		Sig:       make([]byte, len(in.Sig)),
+	}
+	copy(out.ChannelID, in.ChannelID[:])
+	copy(out.Sig, in.Sig)
 	return
 }
 

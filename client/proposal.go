@@ -684,7 +684,7 @@ func (c *Client) fundSubchannel(ctx context.Context, prop *SubChannelProposal, s
 func enableVer0Cache(c wire.Cacher) *wire.Predicate {
 	p := func(m *wire.Envelope) bool {
 		return m.Msg.Type() == wire.ChannelUpdateAcc &&
-			m.Msg.(*msgChannelUpdateAcc).Version == 0
+			m.Msg.(*MsgChannelUpdateAcc).Version == 0
 	}
 	c.Cache(&p)
 	return &p

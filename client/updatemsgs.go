@@ -31,7 +31,7 @@ func init() {
 		})
 	wire.RegisterDecoder(wire.ChannelUpdateAcc,
 		func(r io.Reader) (wire.Msg, error) {
-			var m msgChannelUpdateAcc
+			var m MsgChannelUpdateAcc
 			return &m, m.Decode(r)
 		})
 	wire.RegisterDecoder(wire.ChannelUpdateRej,
@@ -80,10 +80,10 @@ type (
 		Base() *msgChannelUpdate
 	}
 
-	// msgChannelUpdateAcc is the wire message sent as a positive reply to a
+	// MsgChannelUpdateAcc is the wire message sent as a positive reply to a
 	// ChannelUpdate.  It references the channel ID and version and contains the
 	// signature on the accepted new state by the sender.
-	msgChannelUpdateAcc struct {
+	MsgChannelUpdateAcc struct {
 		// ChannelID is the channel ID.
 		ChannelID channel.ID
 		// Version of the state that is accepted.
@@ -107,7 +107,7 @@ type (
 
 var (
 	_ ChannelMsg          = (*msgChannelUpdate)(nil)
-	_ channelUpdateResMsg = (*msgChannelUpdateAcc)(nil)
+	_ channelUpdateResMsg = (*MsgChannelUpdateAcc)(nil)
 	_ channelUpdateResMsg = (*MsgChannelUpdateRej)(nil)
 )
 
@@ -117,7 +117,7 @@ func (*msgChannelUpdate) Type() wire.Type {
 }
 
 // Type returns this message's type: ChannelUpdateAcc.
-func (*msgChannelUpdateAcc) Type() wire.Type {
+func (*MsgChannelUpdateAcc) Type() wire.Type {
 	return wire.ChannelUpdateAcc
 }
 
@@ -146,11 +146,11 @@ func (c *msgChannelUpdate) Decode(r io.Reader) (err error) {
 	return err
 }
 
-func (c msgChannelUpdateAcc) Encode(w io.Writer) error {
+func (c MsgChannelUpdateAcc) Encode(w io.Writer) error {
 	return perunio.Encode(w, c.ChannelID, c.Version, c.Sig)
 }
 
-func (c *msgChannelUpdateAcc) Decode(r io.Reader) (err error) {
+func (c *MsgChannelUpdateAcc) Decode(r io.Reader) (err error) {
 	if err := perunio.Decode(r, &c.ChannelID, &c.Version); err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func (c *msgChannelUpdate) ID() channel.ID {
 }
 
 // ID returns the id of the channel this update acceptance refers to.
-func (c *msgChannelUpdateAcc) ID() channel.ID {
+func (c *MsgChannelUpdateAcc) ID() channel.ID {
 	return c.ChannelID
 }
 
@@ -182,7 +182,7 @@ func (c *MsgChannelUpdateRej) ID() channel.ID {
 }
 
 // Ver returns the version of the state this update acceptance refers to.
-func (c *msgChannelUpdateAcc) Ver() uint64 {
+func (c *MsgChannelUpdateAcc) Ver() uint64 {
 	return c.Version
 }
 
