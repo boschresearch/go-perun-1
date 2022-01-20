@@ -190,7 +190,7 @@ func TestChannelProposalAccSerialization(t *testing.T) {
 			require.NoError(t, err)
 			m := proposal.Accept(wallettest.NewRandomAddress(rng))
 			peruniotest.MsgSerializerTest(t, m)
-			// protobuftest.MsgSerializerTest(t, m)
+			protobuftest.MsgSerializerTest(t, m)
 		}
 	})
 }
