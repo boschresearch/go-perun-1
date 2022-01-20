@@ -32,17 +32,17 @@ func toLedgerChannelProposal(in *LedgerChannelProposalMsg) (*client.LedgerChanne
 }
 
 func toLedgerChannelProposalAcc(in *LedgerChannelProposalAccMsg) (*client.LedgerChannelProposalAcc, error) {
-	baseChannelProposalAcc := toBaseChannelProposalAcc(in.BaseChannelProposalAcc)
 	participant, err := toWalletAddr(in.Participant)
 	if err != nil {
 		return nil, err
 	}
 
 	return &client.LedgerChannelProposalAcc{
-		BaseChannelProposalAcc: baseChannelProposalAcc,
+		BaseChannelProposalAcc: toBaseChannelProposalAcc(in.BaseChannelProposalAcc),
 		Participant:            participant,
 	}, nil
 }
+
 func toSubChannelProposal(in *SubChannelProposalMsg) (*client.SubChannelProposal, error) {
 	baseChannelProposal, err := toBaseChannelProposal(in.BaseChannelProposal)
 	if err != nil {
@@ -53,6 +53,12 @@ func toSubChannelProposal(in *SubChannelProposalMsg) (*client.SubChannelProposal
 	}
 	copy(out.Parent[:], in.Parent)
 	return out, nil
+}
+
+func toSubChannelProposalAcc(in *SubChannelProposalAccMsg) *client.SubChannelProposalAcc {
+	return &client.SubChannelProposalAcc{
+		BaseChannelProposalAcc: toBaseChannelProposalAcc(in.BaseChannelProposalAcc),
+	}
 }
 
 func toVirtualChannelProposal(in *VirtualChannelProposalMsg) (*client.VirtualChannelProposal, error) {
@@ -257,6 +263,12 @@ func fromSubChannelProposal(in *client.SubChannelProposal) (*SubChannelProposalM
 	}
 	copy(out.Parent, in.Parent[:])
 	return out, nil
+}
+
+func fromSubChannelProposalAcc(in *client.SubChannelProposalAcc) *SubChannelProposalAccMsg {
+	return &SubChannelProposalAccMsg{
+		BaseChannelProposalAcc: fromBaseChannelProposalAcc(in.BaseChannelProposalAcc),
+	}
 }
 
 func fromVirtualChannelProposal(in *client.VirtualChannelProposal) (*VirtualChannelProposalMsg, error) {

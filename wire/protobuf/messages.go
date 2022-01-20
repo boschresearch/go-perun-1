@@ -74,6 +74,11 @@ func EncodeEnvelope(env wire.Envelope) ([]byte, error) {
 		grpcMsg = &Envelope_SubChannelProposalMsg{
 			SubChannelProposalMsg: subChannelProposal,
 		}
+	case wire.SubChannelProposalAcc:
+		msg := env.Msg.(*client.SubChannelProposalAcc)
+		grpcMsg = &Envelope_SubChannelProposalAccMsg{
+			SubChannelProposalAccMsg: fromSubChannelProposalAcc(msg),
+		}
 	case wire.VirtualChannelProposal:
 		msg := env.Msg.(*client.VirtualChannelProposal)
 		virtualChannelProposal, err := fromVirtualChannelProposal(msg)
@@ -131,12 +136,19 @@ func DecodeEnvelope(data []byte) (wire.Envelope, error) {
 		}
 	case *Envelope_AuthResponseMsg:
 		env.Msg = &wire.AuthResponseMsg{}
+
 	case *Envelope_LedgerChannelProposalMsg:
 		env.Msg, err = toLedgerChannelProposal(protoEnv.GetLedgerChannelProposalMsg())
+
 	case *Envelope_LedgerChannelProposalAccMsg:
 		env.Msg, err = toLedgerChannelProposalAcc(protoEnv.GetLedgerChannelProposalAccMsg())
+
 	case *Envelope_SubChannelProposalMsg:
 		env.Msg, err = toSubChannelProposal(protoEnv.GetSubChannelProposalMsg())
+
+	case *Envelope_SubChannelProposalAccMsg:
+		env.Msg = toSubChannelProposalAcc(protoEnv.GetSubChannelProposalAccMsg())
+
 	case *Envelope_VirtualChannelProposalMsg:
 		env.Msg, err = toVirtualChannelProposal(protoEnv.GetVirtualChannelProposalMsg())
 	}
