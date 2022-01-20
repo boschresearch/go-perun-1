@@ -213,7 +213,7 @@ func (c *Channel) updateGeneric(
 	}
 	c.Log().Tracef("Received update response (%T): %v", res, res)
 
-	if rej, ok := res.(*msgChannelUpdateRej); ok {
+	if rej, ok := res.(*MsgChannelUpdateRej); ok {
 		return newPeerRejectedError("channel update", rej.Reason)
 	}
 
@@ -360,7 +360,7 @@ func (c *Channel) handleUpdateRej(
 		}
 	}()
 
-	msgUpRej := &msgChannelUpdateRej{
+	msgUpRej := &MsgChannelUpdateRej{
 		ChannelID: c.ID(),
 		Version:   req.Base().State.Version,
 		Reason:    reason,

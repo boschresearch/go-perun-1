@@ -94,18 +94,6 @@ func TestChannelUpdateAccSerialization(t *testing.T) {
 	}
 }
 
-func TestChannelUpdateRejSerialization(t *testing.T) {
-	rng := pkgtest.Prng(t)
-	for i := 0; i < 4; i++ {
-		m := &msgChannelUpdateRej{
-			ChannelID: test.NewRandomChannelID(rng),
-			Version:   uint64(rng.Int63()),
-			Reason:    newRandomString(rng, 16, 16),
-		}
-		peruniotest.MsgSerializerTest(t, m)
-	}
-}
-
 // newRandomSig generates a random account and then returns the signature on
 // some random data.
 func newRandomSig(rng *rand.Rand) wallet.Sig {

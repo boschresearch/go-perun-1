@@ -55,7 +55,6 @@ func Test_Msg_Encode_Decode(t *testing.T) {
 
 }
 
-//	*Envelope_ChannelProposalRejMsg
 //	*Envelope_ChannelUpdateMsg
 //	*Envelope_VirtualChannelFundingProposalMsg
 //	*Envelope_VirtualChannelSettlementProposalMsg

@@ -111,6 +111,15 @@ func toChannelProposalRej(in *ChannelProposalRejMsg) (out *client.ChannelProposa
 	return
 }
 
+func toChannelUpdateRej(in *ChannelUpdateRejMsg) (out *client.MsgChannelUpdateRej) {
+	out = &client.MsgChannelUpdateRej{
+		Version: in.Version,
+		Reason:  in.Reason,
+	}
+	copy(out.ChannelID[:], in.ChannelID)
+	return
+}
+
 func toWalletAddr(in []byte) (wallet.Address, error) {
 	out := wallet.NewAddress()
 	return out, out.UnmarshalBinary(in)
@@ -340,6 +349,16 @@ func fromChannelProposalRej(in *client.ChannelProposalRej) (out *ChannelProposal
 	out.ProposalID = make([]byte, len(in.ProposalID))
 	copy(out.ProposalID, in.ProposalID[:])
 	out.Reason = in.Reason
+	return
+}
+
+func fromChannelUpdateRej(in *client.MsgChannelUpdateRej) (out *ChannelUpdateRejMsg) {
+	out = &ChannelUpdateRejMsg{
+		ChannelID: make([]byte, len(in.ChannelID)),
+		Version:   in.Version,
+		Reason:    in.Reason,
+	}
+	copy(out.ChannelID, in.ChannelID[:])
 	return
 }
 
