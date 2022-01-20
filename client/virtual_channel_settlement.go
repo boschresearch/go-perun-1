@@ -53,9 +53,9 @@ func (c *Channel) withdrawVirtualChannel(ctx context.Context, virtual *Channel) 
 		c.Log().WithError(err).Panicf("removing sub-allocation with id %x", virtualAlloc.ID)
 	}
 
-	err := c.updateGeneric(ctx, state, func(mcu *msgChannelUpdate) wire.Msg {
+	err := c.updateGeneric(ctx, state, func(mcu *MsgChannelUpdate) wire.Msg {
 		return &virtualChannelSettlementProposal{
-			msgChannelUpdate: *mcu,
+			MsgChannelUpdate: *mcu,
 			Final: channel.SignedState{
 				Params: virtual.Params(),
 				State:  virtual.state(),

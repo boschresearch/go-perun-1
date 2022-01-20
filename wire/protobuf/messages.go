@@ -102,6 +102,15 @@ func EncodeEnvelope(env wire.Envelope) ([]byte, error) {
 		grpcMsg = &Envelope_ChannelProposalRejMsg{
 			ChannelProposalRejMsg: fromChannelProposalRej(msg),
 		}
+	case wire.ChannelUpdate:
+		msg := env.Msg.(*client.MsgChannelUpdate)
+		channelUpdate, err := fromChannelUpdate(msg)
+		if err != nil {
+			return nil, err
+		}
+		grpcMsg = &Envelope_ChannelUpdateMsg{
+			ChannelUpdateMsg: channelUpdate,
+		}
 	case wire.ChannelUpdateRej:
 		msg := env.Msg.(*client.MsgChannelUpdateRej)
 		grpcMsg = &Envelope_ChannelUpdateRejMsg{
@@ -181,6 +190,9 @@ func DecodeEnvelope(data []byte) (wire.Envelope, error) {
 
 	case *Envelope_ChannelProposalRejMsg:
 		env.Msg = toChannelProposalRej(protoEnv.GetChannelProposalRejMsg())
+
+	case *Envelope_ChannelUpdateMsg:
+		env.Msg, err = toChannelUpdate(protoEnv.GetChannelUpdateMsg())
 
 	case *Envelope_ChannelUpdateRejMsg:
 		env.Msg = toChannelUpdateRej(protoEnv.GetChannelUpdateRejMsg())

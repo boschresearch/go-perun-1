@@ -174,7 +174,7 @@ func (c *Channel) Update(ctx context.Context, update func(*channel.State) error)
 func (c *Channel) updateGeneric(
 	ctx context.Context,
 	next *channel.State,
-	prepareMsg func(*msgChannelUpdate) wire.Msg,
+	prepareMsg func(*MsgChannelUpdate) wire.Msg,
 ) (err error) {
 	up := makeChannelUpdate(next, c.machine.Idx())
 	if err = c.machine.Update(ctx, up.State, up.ActorIdx); err != nil {
@@ -194,7 +194,7 @@ func (c *Channel) updateGeneric(
 	}
 	defer resRecv.Close()
 
-	msgUpdate := &msgChannelUpdate{
+	msgUpdate := &MsgChannelUpdate{
 		ChannelUpdate: up,
 		Sig:           sig,
 	}
@@ -246,7 +246,7 @@ func (c *Channel) update(ctx context.Context, update func(*channel.State) error)
 	}
 	state.Version++
 
-	return c.updateGeneric(ctx, state, func(mcu *msgChannelUpdate) wire.Msg { return mcu })
+	return c.updateGeneric(ctx, state, func(mcu *MsgChannelUpdate) wire.Msg { return mcu })
 }
 
 // handleUpdateReq is called by the controller on incoming channel update

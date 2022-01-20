@@ -18,6 +18,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"perun.network/go-perun/channel"
 	"perun.network/go-perun/channel/test"
 	"perun.network/go-perun/client"
 	"perun.network/go-perun/wallet"
@@ -27,6 +28,26 @@ import (
 	pkgtest "polycry.pt/poly-go/test"
 )
 
+func TestChannelUpdateSerialization(t *testing.T) {
+	rng := pkgtest.Prng(t)
+	for i := 0; i < 4; i++ {
+		m := newRandomMsgChannelUpdate(rng)
+		peruniotest.MsgSerializerTest(t, m)
+		protobuftest.MsgSerializerTest(t, m)
+	}
+}
+
+func newRandomMsgChannelUpdate(rng *rand.Rand) *client.MsgChannelUpdate {
+	state := test.NewRandomState(rng)
+	sig := newRandomSig(rng)
+	return &client.MsgChannelUpdate{
+		ChannelUpdate: client.ChannelUpdate{
+			State:    state,
+			ActorIdx: channel.Index(rng.Intn(state.NumParts())),
+		},
+		Sig: sig,
+	}
+}
 func TestChannelUpdateRejSerialization(t *testing.T) {
 	rng := pkgtest.Prng(t)
 	for i := 0; i < 4; i++ {

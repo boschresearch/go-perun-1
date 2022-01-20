@@ -26,7 +26,7 @@ import (
 func init() {
 	wire.RegisterDecoder(wire.ChannelUpdate,
 		func(r io.Reader) (wire.Msg, error) {
-			var m msgChannelUpdate
+			var m MsgChannelUpdate
 			return &m, m.Decode(r)
 		})
 	wire.RegisterDecoder(wire.ChannelUpdateAcc,
@@ -64,9 +64,9 @@ type (
 		Ver() uint64
 	}
 
-	// msgChannelUpdate is the wire message of a channel update proposal. It
+	// MsgChannelUpdate is the wire message of a channel update proposal. It
 	// additionally holds the signature on the proposed state.
-	msgChannelUpdate struct {
+	MsgChannelUpdate struct {
 		ChannelUpdate
 		// Sig is the signature on the proposed state by the peer sending the
 		// ChannelUpdate.
@@ -77,7 +77,7 @@ type (
 	ChannelUpdateProposal interface {
 		wire.Msg
 		perunio.Decoder
-		Base() *msgChannelUpdate
+		Base() *MsgChannelUpdate
 	}
 
 	// MsgChannelUpdateAcc is the wire message sent as a positive reply to a
@@ -106,13 +106,13 @@ type (
 )
 
 var (
-	_ ChannelMsg          = (*msgChannelUpdate)(nil)
+	_ ChannelMsg          = (*MsgChannelUpdate)(nil)
 	_ channelUpdateResMsg = (*MsgChannelUpdateAcc)(nil)
 	_ channelUpdateResMsg = (*MsgChannelUpdateRej)(nil)
 )
 
 // Type returns this message's type: ChannelUpdate.
-func (*msgChannelUpdate) Type() wire.Type {
+func (*MsgChannelUpdate) Type() wire.Type {
 	return wire.ChannelUpdate
 }
 
@@ -127,15 +127,15 @@ func (*MsgChannelUpdateRej) Type() wire.Type {
 }
 
 // Base returns the core channel update message.
-func (c *msgChannelUpdate) Base() *msgChannelUpdate {
+func (c *MsgChannelUpdate) Base() *MsgChannelUpdate {
 	return c
 }
 
-func (c msgChannelUpdate) Encode(w io.Writer) error {
+func (c MsgChannelUpdate) Encode(w io.Writer) error {
 	return perunio.Encode(w, c.State, c.ActorIdx, c.Sig)
 }
 
-func (c *msgChannelUpdate) Decode(r io.Reader) (err error) {
+func (c *MsgChannelUpdate) Decode(r io.Reader) (err error) {
 	if c.State == nil {
 		c.State = new(channel.State)
 	}
@@ -167,7 +167,7 @@ func (c *MsgChannelUpdateRej) Decode(r io.Reader) (err error) {
 }
 
 // ID returns the id of the channel this update refers to.
-func (c *msgChannelUpdate) ID() channel.ID {
+func (c *MsgChannelUpdate) ID() channel.ID {
 	return c.State.ID
 }
 
@@ -198,14 +198,14 @@ Virtual channel
 type (
 	// virtualChannelFundingProposal is a channel update that proposes the funding of a virtual channel.
 	virtualChannelFundingProposal struct {
-		msgChannelUpdate
+		MsgChannelUpdate
 		Initial  channel.SignedState
 		IndexMap []channel.Index
 	}
 
 	// virtualChannelSettlementProposal is a channel update that proposes the settlement of a virtual channel.
 	virtualChannelSettlementProposal struct {
-		msgChannelUpdate
+		MsgChannelUpdate
 		Final channel.SignedState
 	}
 )
@@ -217,7 +217,7 @@ func (*virtualChannelFundingProposal) Type() wire.Type {
 
 func (m virtualChannelFundingProposal) Encode(w io.Writer) (err error) {
 	err = perunio.Encode(w,
-		m.msgChannelUpdate,
+		m.MsgChannelUpdate,
 		m.Initial.Params,
 		*m.Initial.State,
 		indexMapWithLen(m.IndexMap),
@@ -235,7 +235,7 @@ func (m *virtualChannelFundingProposal) Decode(r io.Reader) (err error) {
 		State:  &channel.State{},
 	}
 	err = perunio.Decode(r,
-		&m.msgChannelUpdate,
+		&m.MsgChannelUpdate,
 		m.Initial.Params,
 		m.Initial.State,
 		(*indexMapWithLen)(&m.IndexMap),
@@ -255,7 +255,7 @@ func (*virtualChannelSettlementProposal) Type() wire.Type {
 
 func (m virtualChannelSettlementProposal) Encode(w io.Writer) (err error) {
 	err = perunio.Encode(w,
-		m.msgChannelUpdate,
+		m.MsgChannelUpdate,
 		m.Final.Params,
 		*m.Final.State,
 	)
@@ -272,7 +272,7 @@ func (m *virtualChannelSettlementProposal) Decode(r io.Reader) (err error) {
 		State:  &channel.State{},
 	}
 	err = perunio.Decode(r,
-		&m.msgChannelUpdate,
+		&m.MsgChannelUpdate,
 		m.Final.Params,
 		m.Final.State,
 	)

@@ -26,33 +26,13 @@ import (
 	pkgtest "polycry.pt/poly-go/test"
 )
 
-func TestChannelUpdateSerialization(t *testing.T) {
-	rng := pkgtest.Prng(t)
-	for i := 0; i < 4; i++ {
-		m := newRandomMsgChannelUpdate(rng)
-		peruniotest.MsgSerializerTest(t, m)
-	}
-}
-
-func newRandomMsgChannelUpdate(rng *rand.Rand) *msgChannelUpdate {
-	state := test.NewRandomState(rng)
-	sig := newRandomSig(rng)
-	return &msgChannelUpdate{
-		ChannelUpdate: ChannelUpdate{
-			State:    state,
-			ActorIdx: channel.Index(rng.Intn(state.NumParts())),
-		},
-		Sig: sig,
-	}
-}
-
 func TestSerialization_VirtualChannelFundingProposal(t *testing.T) {
 	rng := pkgtest.Prng(t)
 	for i := 0; i < 4; i++ {
 		msgUp := newRandomMsgChannelUpdate(rng)
 		params, state := test.NewRandomParamsAndState(rng)
 		m := &virtualChannelFundingProposal{
-			msgChannelUpdate: *msgUp,
+			MsgChannelUpdate: *msgUp,
 			Initial: channel.SignedState{
 				Params: params,
 				State:  state,
@@ -64,13 +44,24 @@ func TestSerialization_VirtualChannelFundingProposal(t *testing.T) {
 	}
 }
 
+func newRandomMsgChannelUpdate(rng *rand.Rand) *MsgChannelUpdate {
+	state := test.NewRandomState(rng)
+	sig := newRandomSig(rng)
+	return &MsgChannelUpdate{
+		ChannelUpdate: ChannelUpdate{
+			State:    state,
+			ActorIdx: channel.Index(rng.Intn(state.NumParts())),
+		},
+		Sig: sig,
+	}
+}
 func TestSerialization_VirtualChannelSettlementProposal(t *testing.T) {
 	rng := pkgtest.Prng(t)
 	for i := 0; i < 4; i++ {
 		msgUp := newRandomMsgChannelUpdate(rng)
 		params, state := test.NewRandomParamsAndState(rng)
 		m := &virtualChannelSettlementProposal{
-			msgChannelUpdate: *msgUp,
+			MsgChannelUpdate: *msgUp,
 			Final: channel.SignedState{
 				Params: params,
 				State:  state,

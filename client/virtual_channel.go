@@ -63,9 +63,9 @@ func (c *Channel) proposeVirtualChannelFunding(ctx context.Context, virtual *Cha
 	state.Allocation.Balances = state.Allocation.Balances.Sub(balances)
 	state.AddSubAlloc(*channel.NewSubAlloc(virtual.ID(), balances.Sum(), indexMap))
 
-	err := c.updateGeneric(ctx, state, func(mcu *msgChannelUpdate) wire.Msg {
+	err := c.updateGeneric(ctx, state, func(mcu *MsgChannelUpdate) wire.Msg {
 		return &virtualChannelFundingProposal{
-			msgChannelUpdate: *mcu,
+			MsgChannelUpdate: *mcu,
 			Initial: channel.SignedState{
 				Params: virtual.Params(),
 				State:  virtual.State(),

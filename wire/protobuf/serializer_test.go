@@ -58,8 +58,6 @@ func Test_Msg_Encode_Decode(t *testing.T) {
 //	*Envelope_ChannelUpdateMsg
 //	*Envelope_VirtualChannelFundingProposalMsg
 //	*Envelope_VirtualChannelSettlementProposalMsg
-//	*Envelope_ChannelUpdateAccMsg
-//	*Envelope_ChannelUpdateRejMsg
 //	*Envelope_ChannelSyncMsg
 func newEnvelope(rng *rand.Rand) wire.Envelope {
 	return wire.Envelope{

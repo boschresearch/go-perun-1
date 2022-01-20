@@ -111,25 +111,6 @@ func toChannelProposalRej(in *ChannelProposalRejMsg) (out *client.ChannelProposa
 	return
 }
 
-func toChannelUpdateAcc(in *ChannelUpdateAccMsg) (out *client.MsgChannelUpdateAcc) {
-	out = &client.MsgChannelUpdateAcc{
-		Version: in.Version,
-		Sig:     wallet.Sig(make([]byte, len(in.Sig))),
-	}
-	copy(out.ChannelID[:], in.ChannelID)
-	copy(out.Sig, in.Sig)
-	return
-}
-
-func toChannelUpdateRej(in *ChannelUpdateRejMsg) (out *client.MsgChannelUpdateRej) {
-	out = &client.MsgChannelUpdateRej{
-		Version: in.Version,
-		Reason:  in.Reason,
-	}
-	copy(out.ChannelID[:], in.ChannelID)
-	return
-}
-
 func toWalletAddr(in []byte) (wallet.Address, error) {
 	out := wallet.NewAddress()
 	return out, out.UnmarshalBinary(in)
@@ -359,26 +340,6 @@ func fromChannelProposalRej(in *client.ChannelProposalRej) (out *ChannelProposal
 	out.ProposalID = make([]byte, len(in.ProposalID))
 	copy(out.ProposalID, in.ProposalID[:])
 	out.Reason = in.Reason
-	return
-}
-
-func fromChannelUpdateRej(in *client.MsgChannelUpdateRej) (out *ChannelUpdateRejMsg) {
-	out = &ChannelUpdateRejMsg{
-		ChannelID: make([]byte, len(in.ChannelID)),
-		Version:   in.Version,
-		Reason:    in.Reason,
-	}
-	copy(out.ChannelID, in.ChannelID[:])
-	return
-}
-func fromChannelUpdateAcc(in *client.MsgChannelUpdateAcc) (out *ChannelUpdateAccMsg) {
-	out = &ChannelUpdateAccMsg{
-		ChannelID: make([]byte, len(in.ChannelID)),
-		Version:   in.Version,
-		Sig:       make([]byte, len(in.Sig)),
-	}
-	copy(out.ChannelID, in.ChannelID[:])
-	copy(out.Sig, in.Sig)
 	return
 }
 
