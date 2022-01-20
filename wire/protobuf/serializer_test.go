@@ -42,6 +42,7 @@ func Test_Msg_Encode_Decode(t *testing.T) {
 			envelope := newEnvelope(rng)
 			envelope.Msg = tc.msg
 
+			// length should be included when writing to / reading from the wire.
 			data, err := protobuf.EncodeEnvelope(envelope)
 			require.NoError(t, err)
 			require.NotNil(t, data)
@@ -54,11 +55,8 @@ func Test_Msg_Encode_Decode(t *testing.T) {
 
 }
 
-//	*Envelope_LedgerChannelProposalMsg
 //	*Envelope_LedgerChannelProposalAccMsg
-//	*Envelope_SubChannelProposalMsg
 //	*Envelope_SubChannelProposalAccMsg
-//	*Envelope_VirtualChannelProposalMsg
 //	*Envelope_VirtualChannelProposalAccMsg
 //	*Envelope_ChannelProposalRejMsg
 //	*Envelope_ChannelUpdateMsg
