@@ -202,7 +202,9 @@ func TestChannelProposalRejSerialization(t *testing.T) {
 			ProposalID: newRandomProposalID(rng),
 			Reason:     newRandomString(rng, 16, 16),
 		}
+		m.Reason = "some random reason.!,"
 		peruniotest.MsgSerializerTest(t, m)
+		protobuftest.MsgSerializerTest(t, m)
 	}
 }
 

@@ -97,6 +97,11 @@ func EncodeEnvelope(env wire.Envelope) ([]byte, error) {
 		grpcMsg = &Envelope_VirtualChannelProposalAccMsg{
 			VirtualChannelProposalAccMsg: virtualChannelProposalAcc,
 		}
+	case wire.ChannelProposalRej:
+		msg := env.Msg.(*client.ChannelProposalRej)
+		grpcMsg = &Envelope_ChannelProposalRejMsg{
+			ChannelProposalRejMsg: fromChannelProposalRej(msg),
+		}
 	}
 
 	protoEnv := Envelope{
@@ -163,6 +168,9 @@ func DecodeEnvelope(data []byte) (wire.Envelope, error) {
 
 	case *Envelope_VirtualChannelProposalAccMsg:
 		env.Msg, err = toVirtualChannelProposalAcc(protoEnv.GetVirtualChannelProposalAccMsg())
+
+	case *Envelope_ChannelProposalRejMsg:
+		env.Msg = toChannelProposalRej(protoEnv.GetChannelProposalRejMsg())
 	}
 
 	return env, err

@@ -104,6 +104,13 @@ func toVirtualChannelProposalAcc(in *VirtualChannelProposalAccMsg) (*client.Virt
 	}, nil
 }
 
+func toChannelProposalRej(in *ChannelProposalRejMsg) (out *client.ChannelProposalRej) {
+	out = &client.ChannelProposalRej{}
+	copy(out.ProposalID[:], in.ProposalID)
+	out.Reason = in.Reason
+	return
+}
+
 func toWalletAddr(in []byte) (wallet.Address, error) {
 	out := wallet.NewAddress()
 	return out, out.UnmarshalBinary(in)
@@ -326,6 +333,14 @@ func fromVirtualChannelProposalAcc(in *client.VirtualChannelProposalAcc) (*Virtu
 		BaseChannelProposalAcc: baseChannelProposalAcc,
 		Responder:              responder,
 	}, nil
+}
+
+func fromChannelProposalRej(in *client.ChannelProposalRej) (out *ChannelProposalRejMsg) {
+	out = &ChannelProposalRejMsg{}
+	out.ProposalID = make([]byte, len(in.ProposalID))
+	copy(out.ProposalID, in.ProposalID[:])
+	out.Reason = in.Reason
+	return
 }
 
 func fromWalletAddr(in wallet.Address) ([]byte, error) {
