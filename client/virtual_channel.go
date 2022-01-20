@@ -64,7 +64,7 @@ func (c *Channel) proposeVirtualChannelFunding(ctx context.Context, virtual *Cha
 	state.AddSubAlloc(*channel.NewSubAlloc(virtual.ID(), balances.Sum(), indexMap))
 
 	err := c.updateGeneric(ctx, state, func(mcu *MsgChannelUpdate) wire.Msg {
-		return &virtualChannelFundingProposal{
+		return &VirtualChannelFundingProposal{
 			MsgChannelUpdate: *mcu,
 			Initial: channel.SignedState{
 				Params: virtual.Params(),
@@ -85,7 +85,7 @@ const (
 
 func (c *Client) handleVirtualChannelFundingProposal(
 	ch *Channel,
-	prop *virtualChannelFundingProposal,
+	prop *VirtualChannelFundingProposal,
 	responder *UpdateResponder,
 ) {
 	err := c.validateVirtualChannelFundingProposal(ch, prop)
@@ -236,7 +236,7 @@ func (c *Channel) pushVirtualUpdate(ctx context.Context, state *channel.State, s
 
 func (c *Client) validateVirtualChannelFundingProposal(
 	ch *Channel,
-	prop *virtualChannelFundingProposal,
+	prop *VirtualChannelFundingProposal,
 ) error {
 	switch {
 	case prop.Initial.Params.ID() != prop.Initial.State.ID:
@@ -354,11 +354,11 @@ func (c *Client) matchFundingProposal(ctx context.Context, a, b interface{}) boo
 	return true
 }
 
-func castToFundingProposals(inputs ...interface{}) ([]*virtualChannelFundingProposal, error) {
+func castToFundingProposals(inputs ...interface{}) ([]*VirtualChannelFundingProposal, error) {
 	var ok bool
-	props := make([]*virtualChannelFundingProposal, len(inputs))
+	props := make([]*VirtualChannelFundingProposal, len(inputs))
 	for i, x := range inputs {
-		props[i], ok = x.(*virtualChannelFundingProposal)
+		props[i], ok = x.(*VirtualChannelFundingProposal)
 		if !ok {
 			return nil, errors.Errorf("casting %d", i)
 		}
@@ -366,7 +366,7 @@ func castToFundingProposals(inputs ...interface{}) ([]*virtualChannelFundingProp
 	return props, nil
 }
 
-func (c *Client) gatherChannels(props ...*virtualChannelFundingProposal) ([]*Channel, error) {
+func (c *Client) gatherChannels(props ...*VirtualChannelFundingProposal) ([]*Channel, error) {
 	var err error
 	channels := make([]*Channel, len(props))
 	for i, prop := range props {

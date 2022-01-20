@@ -41,7 +41,7 @@ func init() {
 		})
 	wire.RegisterDecoder(wire.VirtualChannelFundingProposal,
 		func(r io.Reader) (wire.Msg, error) {
-			var m virtualChannelFundingProposal
+			var m VirtualChannelFundingProposal
 			return &m, m.Decode(r)
 		})
 	wire.RegisterDecoder(wire.VirtualChannelSettlementProposal,
@@ -196,8 +196,8 @@ Virtual channel
 */
 
 type (
-	// virtualChannelFundingProposal is a channel update that proposes the funding of a virtual channel.
-	virtualChannelFundingProposal struct {
+	// VirtualChannelFundingProposal is a channel update that proposes the funding of a virtual channel.
+	VirtualChannelFundingProposal struct {
 		MsgChannelUpdate
 		Initial  channel.SignedState
 		IndexMap []channel.Index
@@ -211,11 +211,11 @@ type (
 )
 
 // Type returns the message type.
-func (*virtualChannelFundingProposal) Type() wire.Type {
+func (*VirtualChannelFundingProposal) Type() wire.Type {
 	return wire.VirtualChannelFundingProposal
 }
 
-func (m virtualChannelFundingProposal) Encode(w io.Writer) (err error) {
+func (m VirtualChannelFundingProposal) Encode(w io.Writer) (err error) {
 	err = perunio.Encode(w,
 		m.MsgChannelUpdate,
 		m.Initial.Params,
@@ -229,7 +229,7 @@ func (m virtualChannelFundingProposal) Encode(w io.Writer) (err error) {
 	return wallet.EncodeSparseSigs(w, m.Initial.Sigs)
 }
 
-func (m *virtualChannelFundingProposal) Decode(r io.Reader) (err error) {
+func (m *VirtualChannelFundingProposal) Decode(r io.Reader) (err error) {
 	m.Initial = channel.SignedState{
 		Params: &channel.Params{},
 		State:  &channel.State{},

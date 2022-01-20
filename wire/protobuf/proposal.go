@@ -116,6 +116,18 @@ func toWalletAddr(in []byte) (wallet.Address, error) {
 	return out, out.UnmarshalBinary(in)
 }
 
+func toWalletAddrs(in [][]byte) ([]wallet.Address, error) {
+	out := make([]wallet.Address, len(in))
+	for i := range in {
+		out[i] = wallet.NewAddress()
+		err := out[i].UnmarshalBinary(in[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
 func toWireAddrs(in [][]byte) ([]wire.Address, error) {
 	out := make([]wire.Address, len(in))
 	for i := range in {

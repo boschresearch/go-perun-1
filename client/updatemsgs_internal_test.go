@@ -26,24 +26,6 @@ import (
 	pkgtest "polycry.pt/poly-go/test"
 )
 
-func TestSerialization_VirtualChannelFundingProposal(t *testing.T) {
-	rng := pkgtest.Prng(t)
-	for i := 0; i < 4; i++ {
-		msgUp := newRandomMsgChannelUpdate(rng)
-		params, state := test.NewRandomParamsAndState(rng)
-		m := &virtualChannelFundingProposal{
-			MsgChannelUpdate: *msgUp,
-			Initial: channel.SignedState{
-				Params: params,
-				State:  state,
-				Sigs:   newRandomSigs(rng, state.NumParts()),
-			},
-			IndexMap: test.NewRandomIndexMap(rng, state.NumParts(), msgUp.State.NumParts()),
-		}
-		peruniotest.MsgSerializerTest(t, m)
-	}
-}
-
 func newRandomMsgChannelUpdate(rng *rand.Rand) *MsgChannelUpdate {
 	state := test.NewRandomState(rng)
 	sig := newRandomSig(rng)

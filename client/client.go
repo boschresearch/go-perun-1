@@ -179,7 +179,7 @@ func (c *Client) Handle(ph ProposalHandler, uh UpdateHandler) {
 			go c.handleChannelProposal(ph, env.Sender, msg)
 		case *MsgChannelUpdate:
 			go c.handleChannelUpdate(uh, env.Sender, msg)
-		case *virtualChannelFundingProposal:
+		case *VirtualChannelFundingProposal:
 			go c.handleChannelUpdate(uh, env.Sender, msg)
 		case *virtualChannelSettlementProposal:
 			go c.handleChannelUpdate(uh, env.Sender, msg)

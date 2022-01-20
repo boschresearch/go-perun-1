@@ -269,7 +269,7 @@ func (c *Channel) handleUpdateReq(
 
 	// Check whether we have an update related to a virtual channel.
 	switch prop := req.(type) {
-	case *virtualChannelFundingProposal:
+	case *VirtualChannelFundingProposal:
 		client.handleVirtualChannelFundingProposal(c, prop, responder) //nolint:contextcheck
 		return
 	case *virtualChannelSettlementProposal:

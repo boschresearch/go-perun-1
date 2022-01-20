@@ -15,11 +15,13 @@
 package test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"perun.network/go-perun/client"
 	wallettest "perun.network/go-perun/wallet/test"
 	"perun.network/go-perun/wire"
 	"perun.network/go-perun/wire/protobuf"
@@ -43,6 +45,7 @@ func MsgSerializerTest(t *testing.T, msg wire.Msg) {
 	gotEnvelope, err := protobuf.DecodeEnvelope(data)
 	require.NoError(t, err)
 	assert.EqualValues(t, envelope, gotEnvelope)
+	fmt.Printf("\n%+v", envelope.Msg.(*client.VirtualChannelFundingProposal).State)
 }
 
 func newEnvelope(rng *rand.Rand) wire.Envelope {
