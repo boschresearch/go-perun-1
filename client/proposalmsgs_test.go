@@ -208,16 +208,6 @@ func TestChannelProposalRejSerialization(t *testing.T) {
 	}
 }
 
-func TestSubChannelProposalSerialization(t *testing.T) {
-	rng := pkgtest.Prng(t)
-	const repeatRandomizedTest = 16
-	for i := 0; i < repeatRandomizedTest; i++ {
-		prop, err := clienttest.NewRandomSubChannelProposal(rng)
-		require.NoError(t, err)
-		peruniotest.MsgSerializerTest(t, prop)
-	}
-}
-
 func newRandomProposalID(rng *rand.Rand) (id client.ProposalID) {
 	rng.Read(id[:])
 	return
