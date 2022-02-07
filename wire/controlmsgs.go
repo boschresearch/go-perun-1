@@ -22,6 +22,10 @@ import (
 )
 
 func init() {
+	RegisterDecoder(AuthResponse, func(r io.Reader) (Msg, error) {
+		var m AuthResponseMsg
+		return &m, m.Decode(r)
+	})
 	RegisterDecoder(Ping, func(r io.Reader) (Msg, error) { var m PingMsg; return &m, m.Decode(r) })
 	RegisterDecoder(Pong, func(r io.Reader) (Msg, error) { var m PongMsg; return &m, m.Decode(r) })
 	RegisterDecoder(Shutdown, func(r io.Reader) (Msg, error) { var m ShutdownMsg; return &m, m.Decode(r) })

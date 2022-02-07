@@ -17,23 +17,10 @@ package wire_test
 import (
 	"testing"
 
-	"perun.network/go-perun/wire"
 	peruniotest "perun.network/go-perun/wire/perunio/test"
-	protobuftest "perun.network/go-perun/wire/protobuf/test"
+	wiretest "perun.network/go-perun/wire/test"
 )
 
-func TestPingMsg(t *testing.T) {
-	peruniotest.MsgSerializerTest(t, wire.NewPingMsg())
-	protobuftest.MsgSerializerTest(t, wire.NewPingMsg())
-}
-
-func TestPongMsg(t *testing.T) {
-	peruniotest.MsgSerializerTest(t, wire.NewPongMsg())
-	protobuftest.MsgSerializerTest(t, wire.NewPongMsg())
-}
-
-func TestShutdownMsg(t *testing.T) {
-	msg := &wire.ShutdownMsg{"m2384ordkln fb30954390582"}
-	peruniotest.MsgSerializerTest(t, msg)
-	protobuftest.MsgSerializerTest(t, msg)
+func TestControlMsgs(t *testing.T) {
+	wiretest.ControlMsgsTest(t, peruniotest.MsgSerializerTest)
 }

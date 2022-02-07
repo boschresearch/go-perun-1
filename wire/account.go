@@ -20,20 +20,10 @@ import (
 	"perun.network/go-perun/wallet"
 )
 
-func init() {
-	RegisterDecoder(AuthResponse,
-		func(r io.Reader) (Msg, error) {
-			var m AuthResponseMsg
-			return &m, m.Decode(r)
-		})
-}
-
 // Account is a node's permanent Perun identity, which is used to establish
 // authenticity within the Perun peer-to-peer network. For now, it is just a
 // stub.
 type Account = wallet.Account
-
-var _ Msg = (*AuthResponseMsg)(nil)
 
 // AuthResponseMsg is the response message in the peer authentication protocol.
 //
