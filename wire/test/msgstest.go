@@ -33,7 +33,7 @@ func ControlMsgsTest(t *testing.T, serializerTest func(t *testing.T, msg wire.Ms
 	minLen := 16
 	maxLenDiff := 16
 	rng := pkgtest.Prng(t)
-	serializerTest(t, &wire.ShutdownMsg{Reason: newRandomString(rng, minLen, maxLenDiff)})
+	serializerTest(t, &wire.ShutdownMsg{Reason: newRandomASCIIString(rng, minLen, maxLenDiff)})
 }
 
 // AuthMsgsTest runs serialization tests on auth message.
@@ -46,8 +46,12 @@ func AuthMsgsTest(t *testing.T, serializerTest func(t *testing.T, msg wire.Msg))
 
 // newRandomstring returns a random ascii string of length between minLen and
 // minLen+maxLenDiff.
-func newRandomString(rng *rand.Rand, minLen, maxLenDiff int) string {
-	r := make([]byte, minLen+rng.Intn(maxLenDiff))
-	rng.Read(r)
-	return string(r)
+func newRandomASCIIString(rng *rand.Rand, minLen, maxLenDiff int) string {
+	str := make([]byte, minLen+rng.Intn(maxLenDiff))
+	const firstPrintableASCII = 32
+	const lastPrintableASCII = 126
+	for i := range str {
+		str[i] = byte(firstPrintableASCII + rng.Intn(lastPrintableASCII-firstPrintableASCII))
+	}
+	return string(str)
 }
