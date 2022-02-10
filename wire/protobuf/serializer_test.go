@@ -26,3 +26,7 @@ import (
 func TestControlMsgs(t *testing.T) {
 	wiretest.ControlMsgsTest(t, protobuftest.MsgSerializerTest)
 }
+
+func TestAuthResponseMsg(t *testing.T) {
+	wiretest.AuthMsgsTest(t, protobuftest.MsgSerializerTest)
+}
